@@ -54,9 +54,10 @@ export let store = {
             
         }
         getitem(Path).then(content=> {
-            console.log('got new content',content);
-            
-            callback( {...res, Content:content })
+            if (content!=null){
+                console.log('got new content',content);   
+                callback( {...res, Content:content })
+            }
         })
 
         console.log("returning ",res);

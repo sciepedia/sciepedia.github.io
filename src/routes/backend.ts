@@ -36,11 +36,13 @@ export async function register(email:string, password:String){
 
 export async function getitem(key :PathData){
   
-    console.log("backend get ",key)
-
+    if (key.author == "me"){
+        return null
+    }
     const title = key.location.join(".")
 
-    let {data,error} = await supabase.from ("notes").select("*").eq("title",title).eq("is_public", key.pub).eq("user_id",get(userId))
+    let userid = await get_user_id(key.author)
+    let {data,error} = await supabase.from ("notes").select("*").eq("title",title).eq("is_public", key.pub).eq("user_id",userid)
     if (error){
         throw new Error(error.message)
     }
@@ -63,8 +65,6 @@ export async function setitem (key:PathData, content:string){
 }
 
 export async function get_user_name(userId:string){
-
-
     if (userId == ""){
         return "system"
     }
@@ -77,6 +77,20 @@ export async function get_user_name(userId:string){
         return data![0].username as string
     }
     return ""
+}
+
+export async function get_user_id(username:string){
+    
+    let {data,error} = await supabase
+        .from ("userdata")
+        .select("id")
+        .eq("username",username)
+    
+    if (error){throw new Error(error.message)}
+    if (data!.length > 0){
+        return data![0].id as string
+    }
+    throw new Error("no data found for "+username)
 }
 
 export async function set_user_name(userid:string){
