@@ -56,12 +56,10 @@ wenn du mehr wissen willst: #sciepedia:kormann
 
         window.fetch = data.fetch
 
-        //lightmode?
-        {
-            if($lightmode){
-                document.body.classList.add("light")
-            }   
-        }
+
+        if($lightmode){
+            document.body.classList.add("light")
+        }   
 
         pred = document.createElement("div")
         pred.innerHTML = "<p>this is a pred</p><p>this is a pred</p><p>this is a pred</p>"
