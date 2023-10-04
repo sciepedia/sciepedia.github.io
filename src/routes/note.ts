@@ -58,7 +58,7 @@ export class Note {
         this.element = document.createElement("div")
         this.element.classList.add("note")
 
-        this.head = new Head(title,username,this,creator)
+        this.head = new Head(title,get(username),this,creator)
         this.body = new Body(this.txt,this,path,call_hist)
 
         this.element.appendChild(this.head.element)
@@ -175,7 +175,7 @@ export class Head {
             hist.pop()
             let root = hist[hist.length-1]
 
-            let base_note = new Note(root,"",root)
+            let base_note = new Note(root,root)
             page.append(base_note.element)
             title_list = [{element:base_note.head.title_element,fullpath:root}]
 

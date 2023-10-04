@@ -238,7 +238,7 @@ export function get_path_data(path:string):PathData{
     }
     path = path.substring(1)
 
-    let author = "None"
+    let author = get(username)
 
     const location = path.split(".").map(s=>{
         const su = s.split(":")

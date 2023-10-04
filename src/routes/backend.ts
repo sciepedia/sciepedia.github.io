@@ -48,7 +48,7 @@ export async function getitem(key :PathData){
     if (data!.length>0){
         return data![0].content as string
     }
-    return ""
+    throw new Error('no data found for that key')
 
 }
 

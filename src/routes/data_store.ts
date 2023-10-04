@@ -26,11 +26,17 @@ export let store = {
    
     getitem : (Path:PathData,callback:(s:NoteData)=>void)=>{
 
+        console.log("get data for ",Path);
+        
+
         var res:NoteData = {Path, Content:"…"}
 
         const key = JSON.stringify(Path)
 
         if (store.has(Path)){
+
+            console.log("found path in store");
+            
             try{
                 res = JSON.parse(localStorage[key]) as NoteData
                 
@@ -43,12 +49,18 @@ export let store = {
                 console.warn("error parsing json",localStorage[key])
                 res = {Path, Content:"<Error>"};
             }
+        }else{
+            console.log("path not found");
+            
         }
         getitem(Path).then(content=> {
             console.log('got new content',content);
             
             callback( {...res, Content:content })
         })
+
+        console.log("returning ",res);
+        
         return res
 
     },
@@ -76,7 +88,11 @@ export let store = {
     
     has:(Path:PathData)=>{
         const key = JSON.stringify(Path)
+        console.log("looking for ",key);
+        
         let found =  localStorage[key]!=undefined ? true : false
+        console.log("found:",found);
+        
         return found
     },
 }

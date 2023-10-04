@@ -20,7 +20,7 @@ function createWritable<T>(key:string, def:T){
     return wr
 }
 
-export const username       = createWritable<string>("username", "None")
+export const username       = createWritable<string>("username", "me")
 export const email          = createWritable<string>("email", "")
 export const userId         = createWritable<string>("userId", "")
 export const pwdhash        = createWritable<string>("pwdhash", "None")

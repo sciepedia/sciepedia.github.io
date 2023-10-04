@@ -83,13 +83,19 @@ export function is_http_link(name:string):boolean{
 
 export function make_http_link(target:string):HTMLSpanElement{
 
-
+    
     let spn = document.createElement("span")
-    // let name = target.startsWith("https://") ? target.slice(8) : target
+
     spn.innerHTML = target
     spn.classList.add("httplink")
 
     spn.addEventListener("click",e=>{
+
+        if (target.endsWith(",") || target.endsWith(".")){
+            target = target.substring(0,target.length-1)
+        }
+    
+    
 
         window.open(target, '_blank')?.focus();
 

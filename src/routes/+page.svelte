@@ -30,15 +30,15 @@
                             "´","é","á","í","ú","ó",
                         ]
 
-    const tutorial_text =`click mich und schreib was: xzxysl ... *&^*
+    const tutorial_text =`Click me and write something: xzxysl ... &^
 
-du kannst einen neuen link erstellen mit # und dann text zb.: #link #rekursion #wasauchimmer
+You can create a new link with # followed by text, for example: #link:${$username} #recursion #whatever
 
-click einen link an um eine Seite zu öffnen. wenn die Seite schon existiert wird sie dir angezeigt.
+Click on a link to open a page. If the page already exists, it will be displayed to you.
 
-fast vergessen! erstelle einen account: {}/login dann kannst du eine öffentliche Notiz erstellen die nur du verändern kannst oder du kannst eine Notiz an einen Kontakt schicken.
+Almost forgot! Create an account: {}/login, and then you can create a public note.
 
-wenn du mehr wissen willst: #sciepedia:kormann
+If you want to learn more, check out: #sciepedia:kormann
 `
 
     let page:HTMLDivElement
@@ -100,10 +100,10 @@ wenn du mehr wissen willst: #sciepedia:kormann
             fulltitle = pretty_path(fulltitle)
         })
 
-        store.setitem({Path:get_path_data("_turorial"),Content:tutorial_text.replace("{}",window.location.origin)})
+        store.setitem({Path:get_path_data("#tutorial"),Content:tutorial_text.replace("{}",window.location.origin)})
 
         if(!store.has(get_path_data("_home"))){
-            store.setitem({Path:get_path_data("_home"),Content:"willkommen zu sciepedia\nwenn du neu hier bist: #tutorial:system"})
+            store.setitem({Path:get_path_data("_home"),Content:"welcome to sciepedia\ntry out the tutorial: #tutorial"})
         }
 
         console.log(`creating home for ${$username}`);
@@ -151,7 +151,7 @@ function toggle_lightmode(){
 
 <button id = "loggedin_btn" on:click={()=>{
 
-    push_note("_your_account")
+    window.location.pathname='login'
 
 }}> {logged_in_prefix}</button>
 
