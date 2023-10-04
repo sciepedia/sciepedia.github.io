@@ -1,0 +1,52 @@
+
+.bg {
+    position: fixed;
+    background-color: #0000003b;
+    height: 100vh;
+    width: 100vw;
+    top:0;
+    left:0;
+    z-index: 100;
+}
+
+.container {
+    background-color: var(--focus);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    border-radius: 1em;
+    padding: 2em 4em 1em 4em;
+    text-align: center;
+}
+
+.container>.stars{
+    color:var(--pink);
+    font-size: 2em;
+    margin:auto;
+    cursor: pointer;
+
+}
+
+.container>button{
+    border: unset;
+    background: unset;
+    color: var(--blue);
+    font-weight: bold;
+    font-size: 1.5em;
+    padding: .5em;
+    margin-top:.5em;
+
+}
+
+.container>input{
+    background-color: transparent;
+    border:unset;
+    padding: .5em 1em;
+    border: .2em solid var(--color);
+    text-align: center;
+    color:var(--color);
+    font-size: 1.5em;
+    user-select: unset;
+}

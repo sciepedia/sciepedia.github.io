@@ -1,0 +1,17 @@
+<svg width="40vh" viewBox="0 0 1000 1000"  style="background:transparent;fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;"  >
+
+  <defs>
+      <linearGradient id="Gradient2" gradientUnits='userSpaceOnUse' x2="600" y2="0" x1="400" y1="1000">
+        <stop offset=" 5%" stop-color= "#00c" />
+        <stop offset="50%" stop-color= "#a2a" />
+        <stop offset="95%" stop-color= "#f44" />
+      </linearGradient>
+  </defs>
+  <g id="bloom" vectornator:layerName="bloom">
+  <path d="M880.0 500L120.0 500" fill="none" opacity="1" stroke="url(#Gradient2)" stroke-linecap="round" stroke-linejoin="round" stroke-width="190.0"/>
+  <path d="M500 880.0L500 120.0" fill="none" opacity="1" stroke="url(#Gradient2)" stroke-linecap="round" stroke-linejoin="round" stroke-width="190.0"/>
+  <path d="M231.299 231.299L768.701 768.701" fill="none" opacity="1" stroke="url(#Gradient2)" stroke-linecap="round" stroke-linejoin="round" stroke-width="190.0"/>
+  <path d="M231.299 768.701L768.701 231.299" fill="none" opacity="1" stroke="url(#Gradient2)" stroke-linecap="round" stroke-linejoin="round" stroke-width="190.0"/>
+  </g>
+</svg>
+
