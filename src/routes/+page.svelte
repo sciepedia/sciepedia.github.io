@@ -86,8 +86,6 @@ wenn du mehr wissen willst: #sciepedia:kormann
         }
 
         page = document.querySelector("#page") as HTMLDivElement
-
-
         window.addEventListener("scroll",e=>{
 
             fulltitle = homebutton
