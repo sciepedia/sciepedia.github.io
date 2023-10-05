@@ -29,9 +29,7 @@ export class Link {
         this.element = document.createElement("span");
 
         this.parent = parent
-
         this.element.classList.add("link")
-
         this.path = name
 
         // remove useless trailing dot and colon
@@ -59,8 +57,9 @@ export class Link {
 
 
         if (!this.path.includes(":")){
-            this.path += `:${get(username)}`
-            this.name += `:${get(username)}`
+
+            let author = parent.username
+            this.path += `:${author}`
         }
 
         
