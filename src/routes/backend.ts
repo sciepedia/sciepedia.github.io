@@ -35,6 +35,8 @@ export async function register(email:string, password:String){
 
 
 export async function getitem(key :PathData){
+    console.log('getitem',key);
+    
   
     if (key.author == "me"){
         return null
@@ -57,6 +59,8 @@ export async function getitem(key :PathData){
 
 
 export async function setitem (key:PathData, content:string){
+    console.log('setitem',key);
+    
     
     const title = key.location.join(".")
     let resp = await supabase.from("notes")

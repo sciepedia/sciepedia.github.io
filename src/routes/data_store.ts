@@ -44,7 +44,7 @@ export let store = {
                 res = {Path, Content:"<Error>"};
             }
         }
-        
+
         getitem(Path).then(content=> {
             if (content!=null){
                 callback( {...res, Content:content })
@@ -60,6 +60,7 @@ export let store = {
         
         const data = JSON.stringify(n)
         const key = JSON.stringify(n.Path)
+        
         localStorage[key] = data
 
         if (n.Path.author != "me"){
