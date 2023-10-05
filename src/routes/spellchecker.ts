@@ -31,10 +31,7 @@ export function typo_element (word:string){
     spn.innerHTML = word
     spn.addEventListener("contextmenu",e=>{
         const suggestions = get_suggestions(word)
-        console.log(suggestions);
         autocomplete.fill(spn,suggestions)
-
-        console.log("my parent is ",autocomplete.element?.parentElement);
         e.preventDefault()
     })
     return spn
