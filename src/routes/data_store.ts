@@ -1,26 +1,9 @@
 
-
 import {getitem,rate,setitem} from "./backend"
 import type { PathData } from "./link";
 import { is_link } from "./util";
 
-
 export type NoteData = {Path:PathData, Content:string}
-
-function check_title(title:string){
-
-    if (!is_link(title)){
-        throw new Error("illegal title " + title);
-    }
-}
-
-function is_public(title:string):boolean{
-    return title.startsWith("#")
-}
-
-function title_to_name(title:string):string{
-    return title.slice(1)
-}
 
 export let store = {
    
@@ -34,7 +17,6 @@ export let store = {
             
             try{
                 res = JSON.parse(localStorage[key]) as NoteData
-                
                 if (typeof res == "string"){
                     res = {Path, Content:res};
                 }
@@ -46,15 +28,14 @@ export let store = {
         }
 
         getitem(Path).then(content=> {
-            if (content!=null){
-                callback( {...res, Content:content })
+            if (content!=null && content != res.Content){
+                res = {...res, Content:content}
+                localStorage[key] = JSON.stringify(res)
+                callback(res)
             }
-        }).catch(err=>{
-            // console.error(err)
         })
         
         return res
-
     },
     setitem:(n : NoteData)=>{
         

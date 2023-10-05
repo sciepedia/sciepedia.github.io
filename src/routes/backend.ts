@@ -35,9 +35,7 @@ export async function register(email:string, password:String){
 
 
 export async function getitem(key :PathData){
-    console.log('getitem',key);
-    
-  
+
     if (key.author == "me"){
         return null
     }
@@ -52,16 +50,15 @@ export async function getitem(key :PathData){
     if (data!.length>0){
         return data![0].content as string
     }
-    throw new Error('no data found for that key')
+
+    return null
 
 }
 
 
 
 export async function setitem (key:PathData, content:string){
-    console.log('setitem',key);
-    
-    
+        
     const title = key.location.join(".")
     let resp = await supabase.from("notes")
         .upsert({content:content,user_id:get(userId),title:title,is_public:key.pub})

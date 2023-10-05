@@ -113,16 +113,6 @@ export class Head {
         this.element.classList.add("head")
         this.create_expand_button()
 
-        // if (this.username){ // author tag
-        //     let authorbutton = document.createElement("span")
-        //     authorbutton.innerHTML = `by ${this.username}`
-        //     // sharebutton.classList.add("navbutton")
-        //     // authorbutton.classList.add("sharebutton")
-        //     authorbutton.classList.add("navbutton")
-        //     this.element.appendChild(authorbutton)
-    
-        // }
-
         this.create_share_button()
     }
 

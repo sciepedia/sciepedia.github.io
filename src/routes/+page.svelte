@@ -102,8 +102,9 @@ If you want to learn more, check out: #sciepedia:kormann
 
         store.setitem({Path:get_path_data("#tutorial"),Content:tutorial_text.replace("{}",window.location.origin)})
 
-        if(!store.has(get_path_data("_home"))){
-            store.setitem({Path:get_path_data("_home"),Content:"welcome to sciepedia\ntry out the tutorial: #tutorial"})
+        let home_path = get_path_data(root.path)
+        if(!store.has(home_path)){
+            store.setitem({Path:home_path,Content:"welcome to sciepedia\ntry out the tutorial: #tutorial"})
         }
         
         let home = new Note (root.path,root.path)
