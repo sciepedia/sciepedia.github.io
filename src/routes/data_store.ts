@@ -26,21 +26,15 @@ export let store = {
    
     getitem : (Path:PathData,callback:(s:NoteData)=>void)=>{
 
-        console.log("get data for ",Path);
-        
 
         var res:NoteData = {Path, Content:"…"}
-
         const key = JSON.stringify(Path)
 
         if (store.has(Path)){
-
-            console.log("found path in store");
             
             try{
                 res = JSON.parse(localStorage[key]) as NoteData
                 
-                //check if res is of type NoteData or string
                 if (typeof res == "string"){
                     res = {Path, Content:res};
                 }
@@ -49,18 +43,15 @@ export let store = {
                 console.warn("error parsing json",localStorage[key])
                 res = {Path, Content:"<Error>"};
             }
-        }else{
-            console.log("path not found");
-            
         }
+        
         getitem(Path).then(content=> {
             if (content!=null){
-                console.log('got new content',content);   
                 callback( {...res, Content:content })
             }
+        }).catch(err=>{
+            // console.error(err)
         })
-
-        console.log("returning ",res);
         
         return res
 
@@ -68,11 +59,12 @@ export let store = {
     setitem:(n : NoteData)=>{
         
         const data = JSON.stringify(n)
-
         const key = JSON.stringify(n.Path)
-
         localStorage[key] = data
-        setitem(n.Path,n.Content)
+
+        if (n.Path.author != "me"){
+            setitem(n.Path,n.Content)
+        }
 
     },
     set_linkstate:(title:string, state:boolean[])=>{
@@ -89,10 +81,8 @@ export let store = {
     
     has:(Path:PathData)=>{
         const key = JSON.stringify(Path)
-        console.log("looking for ",key);
-        
+
         let found =  localStorage[key]!=undefined ? true : false
-        console.log("found:",found);
         
         return found
     },

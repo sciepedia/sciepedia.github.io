@@ -39,7 +39,6 @@
             userid = user!.id
         }
         $username = await get_user_name(userid!)
-        console.log($username);
 
         if (!$username){
             pick_username = true

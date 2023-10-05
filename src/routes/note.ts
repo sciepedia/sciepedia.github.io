@@ -11,11 +11,7 @@ import { username } from "./store"
 
 import { get } from "svelte/store"
 
-
-
 export var title_list:{element:HTMLElement,fullpath:string}[] = [] 
-
-console.log(get(username))
 export var root = {path:"_home:"+get(username)}
 let hist: string[] = []
 export let autocomplete = new Autocomplete()

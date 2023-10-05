@@ -105,8 +105,6 @@ If you want to learn more, check out: #sciepedia:kormann
         if(!store.has(get_path_data("_home"))){
             store.setitem({Path:get_path_data("_home"),Content:"welcome to sciepedia\ntry out the tutorial: #tutorial"})
         }
-
-        console.log(`creating home for ${$username}`);
         
         let home = new Note (root.path,root.path)
 
