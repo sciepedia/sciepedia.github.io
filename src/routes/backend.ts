@@ -1,15 +1,12 @@
 import { createClient, type SignUpWithPasswordCredentials } from '@supabase/supabase-js'
-import type { NoteData } from './data_store';
+import type { NoteData, uuid } from './data_store';
 import { pwdhash, userId, username } from './store';
 import { get } from 'svelte/store';
 import type { PathData } from './link';
 import { set_store_value } from 'svelte/internal';
 
-
-
 const pub_anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InliZm9jbmJkZHZleXloZml6dmpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYzMzMzMzMsImV4cCI6MjAxMTkwOTMzM30.8YyrLgEjoBRBgs5IG4ekuY8qjqvEnjtviRygTtARIx8"
 const supabase = createClient('https://ybfocnbddveyyhfizvjj.supabase.co', pub_anon_key)
-
 
 export async function login(email:string, password:String){
     
@@ -17,7 +14,7 @@ export async function login(email:string, password:String){
     if (res.error != null){
         return {user:null, error:res.error}
     }
-    userId.set(res.data.user.id)
+    userId.set(res.data.user.id as uuid)
     return {user:res.data.user!,error:null}
 }
 
@@ -25,14 +22,13 @@ export async function register(email:string, password:String){
 
     let res = await supabase.auth.signUp({email,password: get(pwdhash)})
     if (res.data.user != null){
-        userId.set(res.data.user.id)
+        userId.set(res.data.user.id as uuid)
     }
     console.log(res);
 
     
     return {user:res.data.user, error:res.error}
 }
-
 
 export async function getitem(key :PathData){
 
@@ -50,19 +46,20 @@ export async function getitem(key :PathData){
     if (data!.length>0){
         return data![0].content as string
     }
-
     return null
-
 }
 
+export async function setitem (n:NoteData){
+    const title = n.Path.location.join(".")
+    const arg = {
+        content:n.Content,
+        user_id:get(userId),
+        title:title,
+        is_public:n.Path.pub,
+        comment_of: n.comment_of?? null
+    }
 
-
-export async function setitem (key:PathData, content:string){
-        
-    const title = key.location.join(".")
-    let resp = await supabase.from("notes")
-        .upsert({content:content,user_id:get(userId),title:title,is_public:key.pub})
-    
+    let resp = await supabase.from("notes").upsert(arg)
 }
 
 export async function get_user_name(userId:string){

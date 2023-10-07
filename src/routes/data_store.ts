@@ -1,61 +1,69 @@
 
 import {getitem,rate,setitem} from "./backend"
-import type { PathData } from "./link";
+import { PathData, get_path_data } from "./link";
 import { is_link } from "./util";
 
-export type NoteData = {Path:PathData, Content:string}
+export type uuid = `${string}-${string}-${string}-${string}-${string}`
+export type NoteData = {Path:PathData, Content:string, comments?:uuid[], id:uuid, comment_of?:uuid}
 
 export let store = {
-   
+
     getitem : (Path:PathData,callback:(s:NoteData)=>void)=>{
-
-
-        var res:NoteData = {Path, Content:"…"}
+        
+        var res:NoteData = {Path, Content:"…",id:"----"}
         const key = JSON.stringify(Path)
 
         if (store.has(Path)){
             
             try{
                 res = JSON.parse(localStorage[key]) as NoteData
-                if (typeof res == "string"){
-                    res = {Path, Content:res};
-                }
                 
             }catch{
                 console.warn("error parsing json",localStorage[key])
-                res = {Path, Content:"<Error>"};
+                res = {Path, Content:"<Error>",id:"----"};
             }
         }
 
         getitem(Path).then(content=> {
             if (content!=null && content != res.Content){
                 res = {...res, Content:content}
-                localStorage[key] = JSON.stringify(res)
+                localStorage[key] = JSON.stringify(res)                
                 callback(res)
             }
         })
-        
+
+        if (res != null){
+            res.Path = new PathData(res.Path.pub,res.Path.author,res.Path.location)
+        }
+
         return res
     },
+   
     setitem:(n : NoteData)=>{
+
+        console.log(n);
         
-        const data = JSON.stringify(n)
+        
         const key = JSON.stringify(n.Path)
-        
+        const data = JSON.stringify(n)
+
         localStorage[key] = data
 
         if (n.Path.author != "me"){
-            setitem(n.Path,n.Content)
+            console.log(n.Path);
+            
+            setitem(n)
         }
+    },
+    
 
+    set_linkstate:(path:PathData, state:boolean[])=>{
+        localStorage["ls_"+JSON.stringify(path)] = JSON.stringify(state)
     },
-    set_linkstate:(title:string, state:boolean[])=>{
-        localStorage["ls_"+title] = JSON.stringify(state)
-    },
-    get_linkstate:(title:string)=>{
-        let res = localStorage["ls_"+title]
+    get_linkstate:(path:PathData):boolean[]=>{
+        let res = localStorage["ls_"+JSON.stringify(path)]
         if (res){
-            return JSON.parse(res)
+            return JSON.parse(res) as boolean[]
         }else{
             return []
         }
@@ -63,10 +71,12 @@ export let store = {
     
     has:(Path:PathData)=>{
         const key = JSON.stringify(Path)
-
         let found =  localStorage[key]!=undefined ? true : false
-        
         return found
     },
+
+    hascomment:(id:uuid)=>{
+        return id in localStorage
+    }
 }
 

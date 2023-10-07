@@ -1,11 +1,13 @@
 
 import {root, setCaret, title_list} from "./note"
 
-import {Note} from "./note"
+import {Note,Body} from "./note"
 
 import { add_title_completion } from "./autocomplete"
 import { username } from "./store"
 import { get } from "svelte/store"
+
+import type { uuid } from "./data_store"
 
 export let link_repo = new Map<string,Link>()
 let link_counter = 0
@@ -13,54 +15,56 @@ let link_counter = 0
 export class Link {
 
     name : string;
-    path : string;
-
+    path : PathData;
 
     public element : HTMLSpanElement;
     private childnote : Note | null = null
 
     is_open : boolean = false
 
-    private parent : Note
+    private parent : Body
 
-    constructor(name:string, parent:Note, compact:boolean) {
+    constructor(name:string, parent:Body, compact:boolean) {
 
         this.name = name;
         this.element = document.createElement("span");
 
         this.parent = parent
         this.element.classList.add("link")
-        this.path = name
+        let path_string = name
 
         // remove useless trailing dot and colon
-        if (this.path.endsWith(".") || this.path.endsWith(":")){
-            this.path = this.path.slice(0,this.path.length-1)
+        if (path_string.endsWith(".") || path_string.endsWith(":")){
+            path_string = path_string.slice(0,path_string.length-1)
         }
 
+        var parent_path = parent.owner.data
+        console.log(parent_path.Path)
 
-        var parent_path = parent.path
+        if (path_string.startsWith("..")){
 
-        if (this.path.startsWith("..")){
-
-            let parent_parts = parent_path.split(".")
-
-            if (parent_parts.length == 1){
+            if (parent_path.Path.location.length == 1){
                 this.element.classList.add("error")
             }else{
-                parent_path = parent_parts.slice(0,parent_parts.length-1).join(".")
-                this.path = parent_path+this.path.slice(1)
+                parent_path.Path.location = parent_path.Path.location.slice(0,parent_path.Path.location.length-1)
+                path_string = parent_path+path_string.slice(1)
             }
 
-        }else if(this.path.startsWith(".")){
-            this.path = parent_path+this.path
+        }else if(path_string.startsWith(".")){
+            console.log(parent_path.Path);
+            
+            path_string = parent_path.Path.tostring()+path_string
         }
 
 
-        if (!this.path.includes(":")){
+        if (!path_string.includes(":")){
 
-            let author = parent.username
-            this.path += `:${author}`
+            let author = parent.owner.data.Path.author
+
+            path_string += `:${author}`
         }
+
+        this.path = get_path_data(path_string)
 
         
         this.element.innerHTML = name
@@ -75,7 +79,7 @@ export class Link {
                 this.open()
             }
 
-            this.parent.body.save_linkstate()
+            this.parent.save_linkstate()
         }
 
         this.element.id = "link"+link_counter++
@@ -84,7 +88,6 @@ export class Link {
         if(compact){
             this.set_expanded(false)
         }
-        
     }
 
     remove(){
@@ -95,25 +98,25 @@ export class Link {
         link_repo.delete(this.element.id)
     }
 
-    rename(new_path:string):string{
+    rename(new_path:PathData):string{
 
         this.path = new_path
 
-        if (new_path.startsWith(this.parent.path) && this.parent.path.length < new_path.length){
-            const diff = new_path.slice(this.parent.path.length)
-            if (diff.startsWith(".")){
-                new_path = diff
-            }
-        }else if(this.parent.path.includes(".")){
-            const prepath = this.parent.path.split(".").slice(0,-1).join(".")
-            if (new_path.startsWith(prepath)){
-                const diff = new_path.slice(prepath.length)
-                if (diff.startsWith("."))
-                new_path = "."+diff
-            }
-        }
+        // if (new_path.startsWith(this.parent.path) && this.parent.path.length < new_path.length){
+        //     const diff = new_path.slice(this.parent.path.length)
+        //     if (diff.startsWith(".")){
+        //         new_path = diff
+        //     }
+        // }else if(this.parent.path.includes(".")){
+        //     const prepath = this.parent.path.split(".").slice(0,-1).join(".")
+        //     if (new_path.startsWith(prepath)){
+        //         const diff = new_path.slice(prepath.length)
+        //         if (diff.startsWith("."))
+        //         new_path.location.push(diff)
+        //     }
+        // }
 
-        this.name = new_path
+        this.name = new_path.tostring()
 
         if (!this.expanded && !this.is_open){
             let compact_name = get_compact_link_name(this.name)
@@ -122,25 +125,25 @@ export class Link {
             this.element.innerHTML = this.name
         }
 
-        this.parent.body.save_lazy()
+        this.parent.save_lazy()
 
         setCaret(this.element,1)
 
         return this.name
     }
 
-    open(call_hist:string[] = []){
+    open(call_hist:PathData[] = []){
         this.is_open = true
 
         this.is_open = true
         this.element.classList.add("open")
+
         this.childnote = new Note(this.name, this.path,this,call_hist)
 
         const line = this.element.parentElement!
         line.appendChild(this.childnote.element)
         title_list.push({element:this.childnote.head.title_element,fullpath:this.path})
         
-        // title_list.push({element:childnote.querySelector(".title")!,fullpath:my_path})
         this.set_expanded(true)
 
         add_title_completion(this.path)
@@ -158,7 +161,7 @@ export class Link {
         let line = this.element.parentElement
         this.childnote!.close()
         
-        if (!this.parent.body.editable){
+        if (!this.parent.editable){
             this.set_expanded(false)
         }
     }
@@ -227,9 +230,25 @@ export function is_typo_element(element:Node){
     return element instanceof HTMLSpanElement && element.classList.contains("typo")
 }
 
-export type PathData = {pub:boolean,location:string[], author:string}
+export class PathData{
+    pub:boolean
+    location:string[]
+    author:string
+
+    constructor(pub:boolean, author: string, location: string[]){
+        this.pub = pub
+        this.author =author
+        this.location = location
+    }
+
+    tostring(){
+        return (this.pub?"#":"_" )+this.location.join(".")+`:${this.author}`
+    }
+}
 
 export function get_path_data(path:string):PathData{
+
+
 
     let pub = path.startsWith("#")
     if (!path.startsWith("#") && !path.startsWith("_")){
@@ -247,5 +266,9 @@ export function get_path_data(path:string):PathData{
         return su[0]
     })
 
-    return {pub,author,location}
+    return new PathData(pub,author,location)
+}
+
+export function is_uuid(input:string) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input)
 }

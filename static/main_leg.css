@@ -336,6 +336,15 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 
+.commentbutton{
+	background-color: transparent;
+	color:var(--color);
+	border: unset;
+	font-weight:bold;
+	font-size: 1.2em;
+	padding-top: 1em;
+}
+
   
 @media all and (min-width:0px) and (max-width: 520px) {
 /* put your css styles in here */
@@ -345,7 +354,6 @@ input[type=range]::-webkit-slider-thumb {
 		border: 0;
 		margin: 0;
 	}
-
 
 	.navbutton{
 		right:0;

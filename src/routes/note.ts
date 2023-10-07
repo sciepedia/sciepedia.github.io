@@ -1,8 +1,6 @@
-import { is_http_link, is_link, make_http_link } from "./util"
-
-import { Link, get_link, get_path_data, is_link_element, is_typo_element } from "./link"
-import { store } from "./data_store"
-import { cleanMarkup } from "./UX"
+import { is_http_link, is_link, make_http_link, cleanMarkup } from "./util"
+import { Link, get_link, get_path_data, is_link_element, is_typo_element, type PathData } from "./link"
+import { store, type NoteData, type uuid } from "./data_store"
 
 import { rename_note } from "./renamer"
 import { Autocomplete, add_title_completion } from "./autocomplete"
@@ -10,17 +8,17 @@ import { typo_element } from "./spellchecker"
 import { username } from "./store"
 
 import { get } from "svelte/store"
-
-export var title_list:{element:HTMLElement,fullpath:string}[] = [] 
-export var root = {path:"_home:"+get(username)}
-let hist: string[] = []
+import type { CommentElement } from "./comments"
+import { insert_hydration } from "svelte/internal"
+export var title_list:{element:HTMLElement,fullpath:PathData}[] = [] 
+export var root = {path:get_path_data("_home:"+get(username))}
+let hist: PathData[] = []
 export let autocomplete = new Autocomplete()
 
 
 export class Note {
     
     // title:string
-    path:string
 
     txt:string
 
@@ -28,23 +26,19 @@ export class Note {
 
     head : Head
     body : Body
-    username: string
+    data : NoteData
 
-    constructor(title:string, path?:string, creator?:Link, call_hist:string[] = []){
+    constructor(title:string, path?:PathData, creator?:Link, call_hist:PathData[] = []){        
 
-        // this.title = title
         if (path==undefined){
-            path = title
+            path = get_path_data(title)
         }
-        this.path = path
 
-        const pathdata = get_path_data(path)
-        this.username = pathdata.author
-
-        let content = store.getitem(pathdata, newcontent =>{
+        let content = store.getitem(path, newcontent =>{
             this.body.free()
             this.body.render(newcontent.Content)
         })
+        this.data = content
         
         this.txt = content.Content
         if (this.txt==undefined){
@@ -53,17 +47,22 @@ export class Note {
 
         this.element = document.createElement("div")
         this.element.classList.add("note")
-
         this.head = new Head(title,get(username),this,creator)
-        this.body = new Body(this.txt,this,path,call_hist)
 
+        this.body = new Body(this.txt,this,content,call_hist)
         this.element.appendChild(this.head.element)
         this.element.appendChild(this.body.element)
     }
 
+    save(){
+        let txt = this.body.get_content_text()
+        console.log("saving", this);
+        this.data.Content = txt
+        store.setitem(this.data)
+    }
+
     close(){
-        
-        this.body.save()
+        this.save()
         this.body.free()
         this.element.remove()
     }
@@ -89,8 +88,8 @@ export class Head {
         if (creator!=undefined){
             this.title_element.addEventListener("click",(_)=>{
 
-                rename_note(this.note.path).then((newpath)=>{
-                    this.note.path = newpath
+                rename_note(this.note.data.Path).then((newpath)=>{
+                    this.note.data.Path = newpath
                     const new_title = creator.rename(newpath)
                     
                     this.set_title(new_title)
@@ -119,7 +118,7 @@ export class Head {
 
     set_title(title:string){
 
-        title = pretty_path(title)
+        title = title
         title = title.replaceAll("_", " ")
         if (title.endsWith(":")){
             title = title.slice(0,-1)
@@ -137,7 +136,7 @@ export class Head {
         sharebutton.classList.add("navbutton")
         sharebutton.addEventListener("click",async(_)=>{
 
-            let name = this.note.path.startsWith("#") ? this.note.path.slice(1) : this.note.path
+            let name = (this.note.data.Path.pub?"_":"")+this.note.data.Path.location.join(".")
             await navigator.clipboard.writeText(location.origin + "?"+name);
             sharebutton.innerHTML = "copied"
         })
@@ -161,18 +160,18 @@ export class Head {
             hist.pop()
             let root = hist[hist.length-1]
 
-            let base_note = new Note(root,root)
+            let base_note = new Note(root.location[root.location.length-1],root)
             page.append(base_note.element)
             title_list = [{element:base_note.head.title_element,fullpath:root}]
 
-            let newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + root.slice(1)
+            let newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + root.location.join(".")
             window.history.pushState({path: newUrl}, '', newUrl)
 
         }
 
         const setroot = (_:MouseEvent)=>{
             
-            this.title = pretty_path(this.note.path)
+            this.title = pretty_path(this.note.data.Path)
             this.title_element.innerHTML = this.title
 
             page.removeChild(page.firstChild!)
@@ -180,20 +179,18 @@ export class Head {
 
             expandbutton.innerHTML = "⇦"
             
-            hist.push(this.note.path)
+            hist.push(this.note.data.Path)
             expandbutton.removeEventListener("click",setroot)
             expandbutton.addEventListener("click",revertroot)
             expandbutton.focus()
 
-            let location = window.location.origin + "?" + this.note.path.slice(1)
 
-            let newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + this.note.path.slice(1)
+
+            let newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + this.note.data.Path.location.join(".")
             window.history.pushState({path: newUrl}, '', newUrl);
 
-            root.path = this.note.path
-
+            root.path = this.note.data.Path
         }
-
 
         if(!this.istop){
             expandbutton.innerHTML = "⇨"
@@ -204,16 +201,16 @@ export class Head {
             expandbutton.addEventListener("click",revertroot)
 
             }else{
-                hist.push(this.note.path)
+                hist.push(this.note.data.Path)
             }
         }
         this.element.appendChild(this.title_element)
     }
 }
 
-var last_editable : Note | null = null
+var last_editable : Body | null = null
 
-export function make_editable (target:Note|null){
+export function make_editable (target:Body|null){
 
     if (target == last_editable){
         return
@@ -221,10 +218,10 @@ export function make_editable (target:Note|null){
     
     if (last_editable != null){
 
-        last_editable.body.set_editable(false)
+        last_editable.set_editable(false)
     }
     if (target != null){
-        target.body.set_editable(true)
+        target.set_editable(true)
     }
     last_editable = target
 }
@@ -233,24 +230,32 @@ export class Body {
     
     element : HTMLDivElement
     txt : string
-    note : Note
+    owner : Note | CommentElement
+
     can_write = false
     
     saves_pending:boolean = false
 
-    constructor(txt:string,parent:Note,path:string,call_hist:string[] = []){
+    comments:uuid[]
+
+    constructor(txt:string,owner:Note|CommentElement,content:NoteData | NoteData,call_hist:PathData[] = []){
+
+        console.log(txt);
+        
+        this.comments = content.comments?? []
 
         if (call_hist.length == 0){
-            call_hist = [parent.path]
+            call_hist = [owner.data.Path]
         }
         this.txt = txt
-        
+
         this.element = document.createElement("div")
         this.element.classList.add("content")
 
-        this.note = parent
+        this.owner = owner
+        owner.body = this
 
-        this.can_write = parent.username == get(username)
+        this.can_write = this.owner.data.Path.author == get(username)
 
         if (txt==""){
             let p = document.createElement("p")
@@ -267,7 +272,7 @@ export class Body {
 
         this.element.addEventListener("click",e=>{
             if ((e.target as HTMLElement).parentElement == this.element || (e.target as HTMLElement) == this.element){
-                make_editable(this.note)
+                make_editable(this)
                 autocomplete.clear()
             }
         })
@@ -277,7 +282,8 @@ export class Body {
         this.element.addEventListener("paste",this.on_paste);
         this.element.addEventListener("copy",this.on_copy)
 
-        const linkstate = store.get_linkstate(path)
+        const linkstate = store.get_linkstate(this.owner.data.Path)
+        
         this.get_links().forEach((link,i)=>{
             if(linkstate[i] && !call_hist.includes(link.path)){
                 link.open(call_hist.concat([link.path]))
@@ -315,18 +321,19 @@ export class Body {
                 dest = "#"+dest
             }
 
-            if (dest.startsWith(this.note.path) && dest.length > this.note.path.length){
-                dest = dest.substring(this.note.path.length)
-            }else{
-                if (this.note.path.includes(".")){
-                    const prepath = this.note.path.split(".").slice(0,-1).join(".")
-                    if (dest.startsWith(prepath)&& dest.length > prepath.length){
-                        dest = "."+dest.substring(prepath.length)
-                    }
-                }
-            }
+
+            // if (dest.startsWith(this.owner.path) && dest.length > this.owner.path.length){
+            //     dest = dest.substring(this.owner.path.length)
+            // }else{
+            //     if (this.owner.path.includes(".")){
+            //         const prepath = this.owner.path.split(".").slice(0,-1).join(".")
+            //         if (dest.startsWith(prepath)&& dest.length > prepath.length){
+            //             dest = "."+dest.substring(prepath.length)
+            //         }
+            //     }
+            // }
             
-            const link = new Link(dest,this.note, false)
+            const link = new Link(dest,this, false)
             this.insert_text(link.element)
 
         }else{
@@ -448,7 +455,7 @@ export class Body {
         let nodes = words.map( w=>{
             
             if (is_link(w)){
-                const link = new Link(w,this.note,compact)
+                const link = new Link(w,this,compact)
                 return link.element
             }else if(is_http_link(w)){
                 return make_http_link(w)
@@ -631,8 +638,7 @@ export class Body {
     }
 
     save(){
-        let txt = this.get_content_text()
-        store.setitem({Path: get_path_data(this.note.path),Content:txt})
+        this.owner.save()
         this.saves_pending = false
     }
 
@@ -640,7 +646,7 @@ export class Body {
         const linkstate:boolean[] = []
         const links = this.get_links()
         links.forEach(l=>linkstate.push(l.is_open))
-        store.set_linkstate(this.note.path,linkstate)
+        store.set_linkstate(this.owner.data.Path,linkstate)
     }
 
     save_lazy(){
@@ -752,32 +758,13 @@ export function setCaret(node:Node,offset:number) {
     }
 }
 
-export function pretty_path (path:string):string{
+export function pretty_path (path:PathData):string{
 
-    if (path.startsWith("..")){
-        path = path.slice(2)
-    }else if (path.startsWith("#") || path.startsWith("_") || path.startsWith(".")){
-        path = path.slice(1)
-    }
-    let author = ""
+    let res = path.location.join(".")
 
-    let all_parts = path.split(".")
-    .map(part=>part.split("@")[0])
-    .map(part=>{
-        const s = part.split(":")
-        if (s.length>1){
-            author = s[1]
-        }
-        return part.split(":")[0]
-    })
+    const authortag = "<span class='author'> by "+path.author+"</span>"
+    res += authortag
 
-    .join(".")
 
-    if (author!=""){
-
-        const authortag = "<span class='author'> by "+author+"</span>"
-        all_parts += authortag
-    }
-
-    return all_parts
+    return res
 }

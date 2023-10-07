@@ -1,6 +1,7 @@
+import { get_path_data, type PathData } from "./link";
 import { is_link } from "./util";
 
-export var rename_note = (path:string) => new Promise<string>((resolve,reject)=>{
+export var rename_note = (path:PathData) => new Promise<PathData>((resolve,reject)=>{
     console.log("rename_note",path);
     
     const background = document.createElement("div")
@@ -22,12 +23,12 @@ export var rename_note = (path:string) => new Promise<string>((resolve,reject)=>
     header.innerHTML = "rename note"
 
     const input = document.createElement("input")
-    input.value = path
+    input.value = path.tostring()
 
     const errormsg = document.createElement("p")
     const finish = ()=>{
-        const newpath = input.value
-        if (newpath != path && is_link(newpath)){
+        const newpath = get_path_data(input.value)
+        if (newpath != path){
             resolve(newpath)
             background.remove()
         }else{

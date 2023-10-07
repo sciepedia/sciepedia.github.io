@@ -102,3 +102,11 @@ export function make_http_link(target:string):HTMLSpanElement{
     })
     return spn
 }
+
+
+export function cleanMarkup(txt:string){
+    let textarea = document.createElement('textarea');
+    textarea.innerHTML = txt;
+    return textarea.value;
+
+}

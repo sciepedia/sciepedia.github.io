@@ -1,4 +1,4 @@
-import { get_link, type Link } from "./link";
+import { get_link, get_path_data, type Link, type PathData } from "./link";
 import { setCaret } from "./note";
 
 export var title_set = new Set<string>()
@@ -14,17 +14,17 @@ export function setup_autocomplete(){
     for (let index = 0; index < localStorage.length; index++) {
         const key = localStorage.key(index)!
         if (key!.startsWith("#")){
-            add_title_completion(key)            
+            add_title_completion(get_path_data(key))            
         }
     }
 }
 
-export function add_title_completion(title:string){
+export function add_title_completion(path:PathData){
 
-    const parts = title.split(".")
+
     const size = title_set.size
-    for (let index = 0; index < parts.length; index++) {
-        const sub_title = parts.slice(0,index+1).join(".")
+    for (let index = 0; index < path.location.length; index++) {
+        const sub_title = path.location.slice(0,index+1).join(".")
         title_set.add(sub_title)
     }
     if (size != title_set.size){
@@ -75,7 +75,7 @@ export class Autocomplete{
         this.element.id = "autocomplete"
         this.element.innerHTML = ""
 
-        const pred = get_completions(path).filter(el => el != path)
+        const pred = get_completions(path.tostring()).filter(el => el != path.tostring())
 
         if (pred.length == 0){return}
 
@@ -88,7 +88,7 @@ export class Autocomplete{
 
             prediction_line.addEventListener("click", ()=>{
 
-                link.rename(element)
+                link.rename(get_path_data(element))
                 this.clear()
             });
         });

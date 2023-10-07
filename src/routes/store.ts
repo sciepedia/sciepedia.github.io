@@ -1,6 +1,7 @@
 
 import { browser } from "$app/environment";
 import { writable, type Writable } from "svelte/store";
+import type { uuid } from "./data_store";
 
 function createWritable<T>(key:string, def:T){
 
@@ -22,7 +23,7 @@ function createWritable<T>(key:string, def:T){
 
 export const username       = createWritable<string>("username", "me")
 export const email          = createWritable<string>("email", "")
-export const userId         = createWritable<string>("userId", "")
+export const userId         = createWritable<uuid>("userId", "-----")
 export const pwdhash        = createWritable<string>("pwdhash", "None")
 export const lightmode      = createWritable<Boolean> ("lightmode", false)
 

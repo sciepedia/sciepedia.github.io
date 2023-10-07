@@ -45,8 +45,8 @@ If you want to learn more, check out: #sciepedia:kormann
     import {root} from "./note"
     import { error } from "@sveltejs/kit";
     import { lightmode, pwdhash, username } from "./store";
-    import { get_path_data } from "./link";
-    let hist: string[]
+    import { PathData, get_path_data } from "./link";
+    let hist: PathData[]
     let logged_in_prefix = $username[0]
 
 
@@ -79,7 +79,7 @@ If you want to learn more, check out: #sciepedia:kormann
             }
             if (is_link(search)){
                 hist.push(root.path)
-                root.path = search
+                root.path = get_path_data(search)
             }
         }
 
@@ -92,22 +92,24 @@ If you want to learn more, check out: #sciepedia:kormann
 
                 if (window.scrollY + tle.element.offsetHeight > tle.element.offsetTop){
                     if (top_input.element.offsetTop < tle.element.offsetTop){
-                        top_input = tle
+                        // top_input = tle
                     }
                 }
             })
-            fulltitle = top_input.fullpath
-            fulltitle = pretty_path(fulltitle)
+            // fulltitle = top_input.fullpath
+            // fulltitle = pretty_path(fulltitle)
         })
+        const tut_path = get_path_data('_tutorial:'+ $username)
+        if (!store.has(tut_path)){
+            store.setitem({Path:tut_path,Content:tutorial_text.replace("{}",window.location.origin),id:crypto.randomUUID()})
+        }
 
-        store.setitem({Path:get_path_data("#tutorial"),Content:tutorial_text.replace("{}",window.location.origin)})
-
-        let home_path = get_path_data(root.path)
+        let home_path = root.path
         if(!store.has(home_path)){
-            store.setitem({Path:home_path,Content:"welcome to sciepedia\ntry out the tutorial: #tutorial"})
+            store.setitem({Path:home_path,Content:"welcome to sciepedia\ntry out the tutorial: #tutorial",id:crypto.randomUUID()})
         }
         
-        let home = new Note (root.path,root.path)
+        let home = new Note ("_home",root.path)
 
         title_list.push({element:home.head.title_element,fullpath:root.path})
 
@@ -131,8 +133,9 @@ If you want to learn more, check out: #sciepedia:kormann
     }
 
 function push_note(path:string){
-    hist.push("_account")
-    let nt = new Note("_account","")
+    const pathdata = get_path_data("_account")
+    hist.push(pathdata)
+    let nt = new Note("_account")
     page.removeChild(page.firstChild!)
     page.appendChild(nt.element)
 }
