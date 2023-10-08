@@ -178,6 +178,10 @@ div.editable>p>span.typo{
 	font-weight: bold;
 }
 
+.head>*{
+	cursor: pointer;
+}
+
 .head:hover>.navbutton{
 	color:var(--grey);
 }
@@ -335,6 +339,14 @@ input[type=range]::-webkit-slider-thumb {
 	background-color:  var(--focus);
 }
 
+/* 
+.commentbutton{
+	background-color: transparent;
+	color:var(--color);
+	border: unset;
+	font-weight:bold;
+	font-size: 1.2em;
+} */
 
   
 @media all and (min-width:0px) and (max-width: 520px) {
@@ -345,7 +357,6 @@ input[type=range]::-webkit-slider-thumb {
 		border: 0;
 		margin: 0;
 	}
-
 
 	.navbutton{
 		right:0;
