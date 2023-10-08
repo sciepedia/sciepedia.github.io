@@ -25,8 +25,6 @@ export async function register(email:string, password:String){
     if (res.data.user != null){
         userId.set(res.data.user.id as uuid)
     }
-    console.log(res);
-
     
     return {user:res.data.user, error:res.error}
 }
@@ -60,32 +58,25 @@ export async function getitem(key :PathData):Promise<NoteData|null>{
 export async function getiditem (id:uuid):Promise <NoteData|null>{
 
     let {data,error} = await supabase.from ("notes").select("*").eq("id", id)
-    console.log(data);
     
     if (error)throw error
     if (data!.length>0) {
         const d = data![0]
         const Path = new PathData(d.is_public,await get_user_name(d.user_id),d.title.split("."))
-        console.log(Path);
         
         const res= {
             Path,
             Content:d.content,
             id:d.id
         }
-        console.log(res);
         return res
-        
     }
     return null
 }
 
 export async function getcomments(id:uuid){
-    console.log("getting comments for",id);
     let {data,error} = await supabase.from("notes").select("*").eq("comment_of",id)
-
     if (error) throw error
-
     return await Promise.all(
         data!.map(async (d) => {
           const Path = new PathData(d.is_public, await get_user_name(d.user_id), d.title.split("."));
@@ -113,11 +104,7 @@ export async function setitem (n:NoteData){
         is_public:n.Path.pub,
         id:n.id,
         comment_of: n.comment_of?? null,
-        // comment_of:"db7ba603-867b-431d-8060-68425aabbcf7"
-    }
-
-    console.log("posting ",arg);
-    
+    }    
 
     let resp = await supabase.from("notes").upsert(arg)
 }

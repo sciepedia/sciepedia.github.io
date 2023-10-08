@@ -5,10 +5,6 @@ export var title_set = new Set<string>()
 var title_list:string[] =[]
 var title_added = false
 
-
-
-// for (let index = 0; index < localStorage.length; index++) {
-
 export function setup_autocomplete(){
 
     for (let index = 0; index < localStorage.length; index++) {
@@ -96,15 +92,11 @@ export class Autocomplete{
     }
 
     fill(parent:HTMLSpanElement, items:string[]){
-
-        console.log("filling autocomplete ",parent);
         
         this.open = true
 
         document.addEventListener("click",e=>{
-            if ((e.target as HTMLElement).parentElement != this.element ){
-                this.clear()
-            }
+            if ((e.target as HTMLElement).parentElement != this.element )this.clear()
         })
 
         this.parent = parent

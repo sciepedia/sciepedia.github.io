@@ -18,8 +18,6 @@ export let store = {
             
             try{
                 res = JSON.parse(localStorage[key]) as NoteData
-                console.log("got local",res);
-                
             }catch{
                 console.warn("error parsing json",localStorage[key])
                 res = {Path, Content:"<Error>",id:"----"};
@@ -27,7 +25,7 @@ export let store = {
         }
 
         getitem(Path).then(content=> {
-            if (content!=null && content.Content != res.Content || content!.id != res.id){
+            if (content!=null && (content.Content != res.Content || content!.id != res.id)){
                 res = {...res, Content:content!.Content, id:content!.id}
                 localStorage[key] = JSON.stringify(res)                
                 callback(res)
@@ -36,9 +34,7 @@ export let store = {
 
         if (res != null){
             res.Path = new PathData(res.Path.pub,res.Path.author,res.Path.location)
-        }
-        console.log("returning",res);
-        
+        }        
         return res
     },
 
@@ -57,19 +53,14 @@ export let store = {
         })
     },
    
-    setitem:(n : NoteData)=>{
-
-        console.log(n);
-        
+    setitem:(n : NoteData)=>{        
         
         const key = JSON.stringify(n.Path)
         const data = JSON.stringify(n)
 
         localStorage[key] = data
 
-        if (n.Path.author != "me"){
-            console.log(n.Path);
-            
+        if (n.Path.author != "me"){            
             setitem(n)
         }
     },
@@ -97,4 +88,3 @@ export let store = {
         return id in localStorage
     }
 }
-

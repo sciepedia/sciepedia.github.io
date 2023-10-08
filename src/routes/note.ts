@@ -18,8 +18,6 @@ export let autocomplete = new Autocomplete()
 
 
 export class Note {
-    
-    // title:string
 
     txt:string
 
@@ -29,7 +27,7 @@ export class Note {
     body : Body
     data : NoteData
 
-    constructor(title:string, path?:PathData, creator?:Link, call_hist:PathData[] = []){        
+    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){        
 
         if (path==undefined){
             path = get_path_data(title)
@@ -59,7 +57,6 @@ export class Note {
 
     save(){
         let txt = this.body.get_content_text()
-        console.log("saving", this);
         this.data.Content = txt
         store.setitem(this.data)
     }
@@ -95,7 +92,7 @@ export class Head {
                     this.note.data.Path = newpath
                     const new_title = creator.rename(newpath)
                     
-                    this.set_title(new_title)
+                    this.set_title(title)
 
                     this.note.body.get_links().forEach((link)=>{
                         if (link.name.startsWith(".")){
@@ -130,16 +127,11 @@ export class Head {
         }
     }
 
-
     set_title(title:string){
 
-        title = title
-        title = title.replaceAll("_", " ")
-        if (title.endsWith(":")){
-            title = title.slice(0,-1)
-        }
-        this.title_element.innerHTML = title
+        // title += `<span class='author'> by ${this.note.data.Path.author}</span>`
         this.title = title
+        this.title_element.textContent = title
     }
 
     create_share_button(){
@@ -186,7 +178,7 @@ export class Head {
 
         const setroot = (_:MouseEvent)=>{
             
-            this.title = pretty_path(this.note.data.Path)
+            this.title = this.note.data.Path.pretty()
             this.title_element.innerHTML = this.title
 
             page.removeChild(page.firstChild!)
@@ -254,14 +246,13 @@ export class Body {
     saves_pending:boolean = false
     comments:uuid[]
 
-    constructor(txt:string,owner:Note|CommentElement,content:NoteData | NoteData,call_hist:PathData[] = []){
+    constructor(txt:string,owner:Note|CommentElement,content:NoteData | NoteData,call_hist:string[] = []){
 
-        console.log(txt);
-        
         this.comments = content.comments?? []
 
+    
         if (call_hist.length == 0){
-            call_hist = [owner.data.Path]
+            call_hist = [owner.data.Path.tostring()]
         }
         this.txt = txt
 
@@ -306,8 +297,9 @@ export class Body {
         const linkstate = store.get_linkstate(this.owner.data.Path)
         
         this.get_links().forEach((link,i)=>{
-            if(linkstate[i] && !call_hist.includes(link.path)){
-                link.open(call_hist.concat([link.path]))
+            
+            if(linkstate[i] && !call_hist.includes(link.path.tostring())){
+                link.open(call_hist.concat([link.path.tostring()]))
             }
             add_title_completion(link.path)
         })
@@ -779,15 +771,4 @@ export function setCaret(node:Node,offset:number) {
         sel.removeAllRanges()
         sel.addRange(range)
     }
-}
-
-export function pretty_path (path:PathData):string{
-
-    let res = path.location.join(".")
-
-    const authortag = "<span class='author'> by "+path.author+"</span>"
-    res += authortag
-
-
-    return res
 }

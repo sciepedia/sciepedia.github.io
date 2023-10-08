@@ -6,7 +6,7 @@
 
     import {tick} from "svelte"
     
-    import { Note, make_editable, pretty_path,title_list } from "./note";
+    import { Note, make_editable,title_list } from "./note";
     import { setup_autocomplete } from "./autocomplete";
     import { setup_spellcheck } from "./spellchecker";
     import { is_link } from "./util"
