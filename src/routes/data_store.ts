@@ -1,5 +1,6 @@
 
-import {getitem,rate,setitem} from "./backend"
+import { claim_component } from "svelte/internal";
+import {getiditem, getitem,rate,setitem} from "./backend"
 import { PathData, get_path_data } from "./link";
 import { is_link } from "./util";
 
@@ -10,13 +11,14 @@ export let store = {
 
     getitem : (Path:PathData,callback:(s:NoteData)=>void)=>{
         
-        var res:NoteData = {Path, Content:"…",id:"----"}
+        var res:NoteData = {Path, Content:"…",id:crypto.randomUUID()}
         const key = JSON.stringify(Path)
 
         if (store.has(Path)){
             
             try{
                 res = JSON.parse(localStorage[key]) as NoteData
+                console.log("got local",res);
                 
             }catch{
                 console.warn("error parsing json",localStorage[key])
@@ -25,8 +27,8 @@ export let store = {
         }
 
         getitem(Path).then(content=> {
-            if (content!=null && content != res.Content){
-                res = {...res, Content:content}
+            if (content!=null && content.Content != res.Content || content!.id != res.id){
+                res = {...res, Content:content!.Content, id:content!.id}
                 localStorage[key] = JSON.stringify(res)                
                 callback(res)
             }
@@ -35,8 +37,24 @@ export let store = {
         if (res != null){
             res.Path = new PathData(res.Path.pub,res.Path.author,res.Path.location)
         }
-
+        console.log("returning",res);
+        
         return res
+    },
+
+    getById : (id:uuid, callback:(p:NoteData)=>void)=>{
+
+        const key = 'pid_'+ id
+        if (key in localStorage){
+            const path = JSON.parse(localStorage[key]) as PathData
+            callback(store.getitem(path,callback))
+        }else getiditem(id).then (d => {
+            if (d==null)throw new Error ("no data found: "+id)
+
+            localStorage[key] = JSON.stringify(d.Path)
+            localStorage[JSON.stringify(d.Path)] = JSON.stringify(d)
+            callback(d)
+        })
     },
    
     setitem:(n : NoteData)=>{

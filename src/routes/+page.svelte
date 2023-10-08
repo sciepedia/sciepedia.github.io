@@ -70,7 +70,7 @@ If you want to learn more, check out: #sciepedia:kormann
         fulltitle = homebutton
         let search = window.location.search 
     
-        hist = [root.path]
+        hist = [get_path_data(root.path)]
         if(search && search.length>1){
             search  = search.slice(1)
             // search = "#" +search
@@ -78,8 +78,8 @@ If you want to learn more, check out: #sciepedia:kormann
                 search= "#" + search
             }
             if (is_link(search)){
-                hist.push(root.path)
-                root.path = get_path_data(search)
+                hist.push(hist[0])
+                root.path = search
             }
         }
 
@@ -104,14 +104,14 @@ If you want to learn more, check out: #sciepedia:kormann
             store.setitem({Path:tut_path,Content:tutorial_text.replace("{}",window.location.origin),id:crypto.randomUUID()})
         }
 
-        let home_path = root.path
+        let home_path = get_path_data(root.path)
         if(!store.has(home_path)){
             store.setitem({Path:home_path,Content:"welcome to sciepedia\ntry out the tutorial: #tutorial",id:crypto.randomUUID()})
         }
         
-        let home = new Note ("_home",root.path)
+        let home = new Note ("_home",home_path)
 
-        title_list.push({element:home.head.title_element,fullpath:root.path})
+        title_list.push({element:home.head.title_element,fullpath:home_path})
 
         page.appendChild(home.element)
 

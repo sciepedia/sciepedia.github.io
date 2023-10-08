@@ -8,10 +8,11 @@ import { typo_element } from "./spellchecker"
 import { username } from "./store"
 
 import { get } from "svelte/store"
-import type { CommentElement } from "./comments"
+import { CommentSection, type CommentElement } from "./comments"
 import { insert_hydration } from "svelte/internal"
 export var title_list:{element:HTMLElement,fullpath:PathData}[] = [] 
-export var root = {path:get_path_data("_home:"+get(username))}
+// export var root = {path:get_path_data("_home:"+get(username))}
+export var root = {path:"_home:"+get(username)}
 let hist: PathData[] = []
 export let autocomplete = new Autocomplete()
 
@@ -50,8 +51,10 @@ export class Note {
         this.head = new Head(title,get(username),this,creator)
 
         this.body = new Body(this.txt,this,content,call_hist)
+
         this.element.appendChild(this.head.element)
         this.element.appendChild(this.body.element)
+
     }
 
     save(){
@@ -113,6 +116,18 @@ export class Head {
         this.create_expand_button()
 
         this.create_share_button()
+
+        {
+            let commentbutton = document.createElement("span")
+            commentbutton.innerHTML = "comments"
+
+            commentbutton.classList.add("sharebutton")
+            commentbutton.classList.add("navbutton")
+            commentbutton.addEventListener("click",async(_)=>{
+                this.note.body.commentSection.toggle()
+            })
+            this.element.appendChild(commentbutton)
+        }
     }
 
 
@@ -189,7 +204,7 @@ export class Head {
             let newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + this.note.data.Path.location.join(".")
             window.history.pushState({path: newUrl}, '', newUrl);
 
-            root.path = this.note.data.Path
+            root.path = this.note.data.Path.tostring()
         }
 
         if(!this.istop){
@@ -229,13 +244,14 @@ export function make_editable (target:Body|null){
 export class Body {
     
     element : HTMLDivElement
+    content : HTMLDivElement
+
+    commentSection : CommentSection
     txt : string
     owner : Note | CommentElement
 
     can_write = false
-    
     saves_pending:boolean = false
-
     comments:uuid[]
 
     constructor(txt:string,owner:Note|CommentElement,content:NoteData | NoteData,call_hist:PathData[] = []){
@@ -250,7 +266,12 @@ export class Body {
         this.txt = txt
 
         this.element = document.createElement("div")
-        this.element.classList.add("content")
+        this.element.classList.add("body")
+        this.content = document.createElement("div")
+        this.element.appendChild(this.content)
+        this.content.classList.add("content")
+
+
 
         this.owner = owner
         owner.body = this
@@ -260,27 +281,27 @@ export class Body {
         if (txt==""){
             let p = document.createElement("p")
             p.innerHTML = "<br>"
-            this.element.appendChild(p)
+            this.content.appendChild(p)
         }else{
             let lines = txt.split("\n")
 
             lines.forEach(l=>{
                 let p = this.make_line(l)
-                this.element.appendChild(p)
+                this.content.appendChild(p)
             })
         }
 
-        this.element.addEventListener("click",e=>{
-            if ((e.target as HTMLElement).parentElement == this.element || (e.target as HTMLElement) == this.element){
+        this.content.addEventListener("click",e=>{
+            if ((e.target as HTMLElement).parentElement == this.content || (e.target as HTMLElement) == this.content){
                 make_editable(this)
                 autocomplete.clear()
             }
         })
 
-        this.element.addEventListener("input",e=>this.on_input(e))
-        this.element.addEventListener("blur",_=> {if(this.editable)make_editable(null)})
-        this.element.addEventListener("paste",this.on_paste);
-        this.element.addEventListener("copy",this.on_copy)
+        this.content.addEventListener("input",e=>this.on_input(e))
+        this.content.addEventListener("blur",_=> {if(this.editable)make_editable(null)})
+        this.content.addEventListener("paste",this.on_paste);
+        this.content.addEventListener("copy",this.on_copy)
 
         const linkstate = store.get_linkstate(this.owner.data.Path)
         
@@ -290,6 +311,8 @@ export class Body {
             }
             add_title_completion(link.path)
         })
+
+        this.commentSection = new CommentSection(this, this.owner.data.Path)
     }
 
     on_paste = (event:ClipboardEvent)=>{
@@ -302,7 +325,7 @@ export class Body {
                 return
             }
         }
-        if (target != this.element){
+        if (target != this.content){
             return
         }
 
@@ -375,13 +398,13 @@ export class Body {
         if (txt==""){
             let p = document.createElement("p")
             p.innerHTML = "<br>"
-            this.element.appendChild(p)
+            this.content.appendChild(p)
         }else{
             let lines = txt.split("\n")
 
             lines.forEach(l=>{
                 let p = this.make_line(l)
-                this.element.appendChild(p)
+                this.content.appendChild(p)
             })
         }
     }
@@ -414,13 +437,13 @@ export class Body {
         links.forEach(l=>{
             l.remove()
         })
-        this.element.innerHTML = ""
+        this.content.innerHTML = ""
 
     }
 
     get_links():Link[]{
         let links:Link[] = []
-        this.element.childNodes.forEach(p=>{
+        this.content.childNodes.forEach(p=>{
             p.childNodes.forEach(n=>{
                 if (is_link_element(n)){
                     const link = get_link((n as HTMLSpanElement).id)
@@ -478,7 +501,7 @@ export class Body {
 
     spellcheck(){
 
-        this.element.childNodes.forEach(p=>{
+        this.content.childNodes.forEach(p=>{
             if (p.nodeName == "P"){
                 p.childNodes.forEach(node=>{
 
@@ -498,9 +521,9 @@ export class Body {
     async on_input(e:Event){
 
 
-        if(this.element.contentEditable != "true"){return}
+        if(this.content.contentEditable != "true"){return}
 
-        if (e.target != this.element){return}
+        if (e.target != this.content){return}
         
         if (e.type == "input" && ( ["¨"].includes ((e as InputEvent).data!) )){
             return
@@ -523,7 +546,7 @@ export class Body {
             p = target.parentElement?.parentElement as HTMLParagraphElement
         }else{
             
-            this.element.childNodes.forEach(c=>{
+            this.content.childNodes.forEach(c=>{
 
                 if (c.nodeName != "P"){
                     const newp = document.createElement("p")
@@ -620,10 +643,10 @@ export class Body {
     set_editable(editable:boolean){
         if (!this.can_write){return}
         this.editable = editable
-        this.element.contentEditable = editable.toString()
-        this.element.classList.toggle("editable",editable)
+        this.content.contentEditable = editable.toString()
+        this.content.classList.toggle("editable",editable)
 
-        this.element.childNodes.forEach(p=>{
+        this.content.childNodes.forEach(p=>{
 
             if (p.nodeName == "P"){
                 p.childNodes.forEach(node=>{
@@ -664,7 +687,7 @@ export class Body {
     get_content_text():string{
 
         let lines:string[] = []
-        this.element.childNodes.forEach(paragraph => {
+        this.content.childNodes.forEach(paragraph => {
             if (paragraph.nodeName == "P"){
                 
                 lines.push(this.get_line_text(paragraph as HTMLParagraphElement))

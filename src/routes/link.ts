@@ -248,8 +248,6 @@ export class PathData{
 
 export function get_path_data(path:string):PathData{
 
-
-
     let pub = path.startsWith("#")
     if (!path.startsWith("#") && !path.startsWith("_")){
         throw new Error("invalid path: "+path)

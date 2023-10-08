@@ -2,8 +2,9 @@ import { createClient, type SignUpWithPasswordCredentials } from '@supabase/supa
 import type { NoteData, uuid } from './data_store';
 import { pwdhash, userId, username } from './store';
 import { get } from 'svelte/store';
-import type { PathData } from './link';
+import { PathData } from './link';
 import { set_store_value } from 'svelte/internal';
+import type { Note } from './note';
 
 const pub_anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InliZm9jbmJkZHZleXloZml6dmpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYzMzMzMzMsImV4cCI6MjAxMTkwOTMzM30.8YyrLgEjoBRBgs5IG4ekuY8qjqvEnjtviRygTtARIx8"
 const supabase = createClient('https://ybfocnbddveyyhfizvjj.supabase.co', pub_anon_key)
@@ -30,7 +31,7 @@ export async function register(email:string, password:String){
     return {user:res.data.user, error:res.error}
 }
 
-export async function getitem(key :PathData){
+export async function getitem(key :PathData):Promise<NoteData|null>{
 
     if (key.author == "me"){
         return null
@@ -44,9 +45,63 @@ export async function getitem(key :PathData){
     }
 
     if (data!.length>0){
-        return data![0].content as string
+        const d = data![0]
+        const res:NoteData = {
+            id:d.id,
+            Path:new PathData(d.is_public,d.user_id,d.title.split(".")),
+            Content:d.content,
+            comment_of: d.comment_of ?? undefined,
+        }
+        return res
     }
     return null
+}
+
+export async function getiditem (id:uuid):Promise <NoteData|null>{
+
+    let {data,error} = await supabase.from ("notes").select("*").eq("id", id)
+    console.log(data);
+    
+    if (error)throw error
+    if (data!.length>0) {
+        const d = data![0]
+        const Path = new PathData(d.is_public,await get_user_name(d.user_id),d.title.split("."))
+        console.log(Path);
+        
+        const res= {
+            Path,
+            Content:d.content,
+            id:d.id
+        }
+        console.log(res);
+        return res
+        
+    }
+    return null
+}
+
+export async function getcomments(id:uuid){
+    console.log("getting comments for",id);
+    let {data,error} = await supabase.from("notes").select("*").eq("comment_of",id)
+
+    if (error) throw error
+
+    return await Promise.all(
+        data!.map(async (d) => {
+          const Path = new PathData(d.is_public, await get_user_name(d.user_id), d.title.split("."));
+          console.log(Path);
+      
+          return {
+            Path,
+            Content: d.content,
+            id: d.id,
+          } as NoteData;
+        })
+      );  
+}
+
+export async function getPath(id:uuid){
+
 }
 
 export async function setitem (n:NoteData){
@@ -56,8 +111,13 @@ export async function setitem (n:NoteData){
         user_id:get(userId),
         title:title,
         is_public:n.Path.pub,
-        comment_of: n.comment_of?? null
+        id:n.id,
+        comment_of: n.comment_of?? null,
+        // comment_of:"db7ba603-867b-431d-8060-68425aabbcf7"
     }
+
+    console.log("posting ",arg);
+    
 
     let resp = await supabase.from("notes").upsert(arg)
 }
