@@ -7,8 +7,6 @@ import { add_title_completion } from "./autocomplete"
 import { username } from "./store"
 import { get } from "svelte/store"
 
-
-
 export let link_repo = new Map<string,Link>()
 let link_counter = 0
 
@@ -238,7 +236,11 @@ export class PathData{
     }
 
     pretty(){
-        return this.location.join(".")+`<span class='author'> by ${this.author}</span>`
+
+        const res = this.location.join(".")+`<span class='author'> by ${this.author}</span>`
+        console.log(res)
+        return res
+        
     }
 }
 

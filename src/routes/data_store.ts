@@ -1,6 +1,5 @@
 
-import { claim_component } from "svelte/internal";
-import {getiditem, getitem,rate,setitem} from "./backend"
+import {getiditem, getitem,setitem} from "./backend"
 import { PathData, get_path_data } from "./link";
 import { is_link } from "./util";
 
@@ -53,7 +52,7 @@ export let store = {
         })
     },
    
-    setitem:(n : NoteData)=>{        
+    setitem:(n : NoteData)=>{    
         
         const key = JSON.stringify(n.Path)
         const data = JSON.stringify(n)

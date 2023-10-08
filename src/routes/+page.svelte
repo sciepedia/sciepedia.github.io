@@ -32,22 +32,24 @@
 
     const tutorial_text =`Click me and write something: xzxysl ... &^
 
-You can create a new link with # followed by text, for example: #link:${$username} #recursion #whatever
+You can create a new link with # followed by text, for example: #link #recursion #whatever
 
 Click on a link to open a page. If the page already exists, it will be displayed to you.
 
-Almost forgot! Create an account: {}/login, and then you can create a public note.
+Almost forgot! Create an account: {}/login, and then you can create public pages.
 
 If you want to learn more, check out: #sciepedia:kormann
 `
 
     let page:HTMLDivElement
     import {root} from "./note"
-    import { error } from "@sveltejs/kit";
     import { lightmode, pwdhash, username } from "./store";
     import { PathData, get_path_data } from "./link";
     let hist: PathData[]
     let logged_in_prefix = $username[0]
+
+    console.log($username);
+    
 
 
     async function setup(){
@@ -106,7 +108,9 @@ If you want to learn more, check out: #sciepedia:kormann
 
         let home_path = get_path_data(root.path)
         if(!store.has(home_path)){
-            store.setitem({Path:home_path,Content:"welcome to sciepedia\ntry out the tutorial: #tutorial",id:crypto.randomUUID()})
+            const data = ({Path:home_path,Content:"welcome to sciepedia\ntry out the tutorial: _tutorial",id:crypto.randomUUID()})
+            localStorage[JSON.stringify(data.Path)] = JSON.stringify(data)
+
         }
         
         let home = new Note ("_home",home_path)

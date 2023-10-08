@@ -9,13 +9,12 @@ import { username } from "./store"
 
 import { get } from "svelte/store"
 import { CommentSection, type CommentElement } from "./comments"
-import { insert_hydration } from "svelte/internal"
+
 export var title_list:{element:HTMLElement,fullpath:PathData}[] = [] 
-// export var root = {path:get_path_data("_home:"+get(username))}
 export var root = {path:"_home:"+get(username)}
-let hist: PathData[] = []
 export let autocomplete = new Autocomplete()
 
+let hist: PathData[] = []
 
 export class Note {
 
@@ -129,9 +128,14 @@ export class Head {
 
     set_title(title:string){
 
-        // title += `<span class='author'> by ${this.note.data.Path.author}</span>`
-        this.title = title
-        this.title_element.textContent = title
+        if (title.startsWith("#") || title.startsWith("_")){
+            title = title.substring(1)
+        }
+
+        const loc = this.note.data.Path.location
+        const parts = loc.slice(loc.length - title.split(".").filter(k=>k!="").length)        
+        const ht = parts.join(".") + (title.includes(":") ? `<span class='author'> by ${this.note.data.Path.author} </span>`:"")
+        this.title_element.innerHTML = ht
     }
 
     create_share_button(){
@@ -190,8 +194,6 @@ export class Head {
             expandbutton.removeEventListener("click",setroot)
             expandbutton.addEventListener("click",revertroot)
             expandbutton.focus()
-
-
 
             let newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + this.note.data.Path.location.join(".")
             window.history.pushState({path: newUrl}, '', newUrl);
@@ -261,8 +263,6 @@ export class Body {
         this.content = document.createElement("div")
         this.element.appendChild(this.content)
         this.content.classList.add("content")
-
-
 
         this.owner = owner
         owner.body = this
