@@ -1,8 +1,6 @@
 
 const SALT = "d8&"
 
-
-
 export async function user_hash(username:string, password:string){
     return await sha256(username+password+SALT)
 }
@@ -45,48 +43,29 @@ export function is_legal_name(name:string):boolean{
     }
 
     return name.replace(/[a-z,A-Z,0-9,\-,\_]/g,"")==""
-
 }
-
 
 export function is_link(txt:string):boolean{
 
     txt = txt.trim()
-
     let prefixes = ["..",".","_","#","@"]
 
-    console.log("check",txt);
-    
-    // check if txt starts with a prefix
-    for (let i = 0; i < prefixes.length; i++) {
-        const prefix = prefixes[i];
-        console.log("check",prefix);
-        if (txt.startsWith(prefix)){
-            
-            return is_name(txt.slice(prefix.length))
-        }
-    }    
+    for (let i = 0; i < prefixes.length; i++) if (txt.startsWith(prefixes[i])) return is_name(txt.slice(prefixes[i].length))
     return false
 }
-
-
 
 export function is_name(txt:string){
     if (txt==""){
         return false
     }
-
-    //test for number or character
     return (/[a-z0-9,ß,ä,ö,ü,ø]/i.test(txt[0]))
 }
-
 
 export function is_http_link(name:string):boolean{
     return (name.startsWith("http://") || name.startsWith("https://"))
 }
 
 export function make_http_link(target:string):HTMLSpanElement{
-
     
     let spn = document.createElement("span")
 
@@ -98,19 +77,13 @@ export function make_http_link(target:string):HTMLSpanElement{
         if (target.endsWith(",") || target.endsWith(".")){
             target = target.substring(0,target.length-1)
         }
-    
-    
-
         window.open(target, '_blank')?.focus();
-
     })
     return spn
 }
-
 
 export function cleanMarkup(txt:string){
     let textarea = document.createElement('textarea');
     textarea.innerHTML = txt;
     return textarea.value;
-
 }
