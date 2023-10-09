@@ -159,7 +159,7 @@ function get_compact_link_name(path:string){
     // remove anything before the last dot 
     let name = path.replace(/.*\./g,"")
     //remove anything after the first @ or :
-    .replace(/[@,:].*/g,"")
+    .replace(/[:].*/g,"")
 
     const possible_prefixes = ["#","_"]
     possible_prefixes.forEach(p=>{
@@ -193,6 +193,7 @@ export class PathData{
     }
 
     tostring(){
+        if (this.location.join(".") == "me") return "@"+this.author
         return (this.pub?"#":"_" )+this.location.join(".")+`:${this.author}`
     }
 
@@ -212,6 +213,9 @@ export class PathData{
     }
 
     create_child(title:string){
+
+        if (title.startsWith("@")) return get_path_data(title)
+
         if (title.endsWith(".") || title.endsWith(":")){
             title = title.slice(0,-1)
         }
@@ -245,6 +249,8 @@ export class PathData{
 }
 
 export function get_path_data(path:string, default_author?:string):PathData{
+
+    if (path.startsWith("@")) path = path.replace("@", "#me:")
 
     let pub = path.startsWith("#")
     if (!path.startsWith("#") && !path.startsWith("_")){

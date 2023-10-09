@@ -53,12 +53,16 @@ export function is_link(txt:string):boolean{
 
     txt = txt.trim()
 
-    let prefixes = ["..",".","_","#"]
+    let prefixes = ["..",".","_","#","@"]
 
+    console.log("check",txt);
+    
     // check if txt starts with a prefix
     for (let i = 0; i < prefixes.length; i++) {
         const prefix = prefixes[i];
+        console.log("check",prefix);
         if (txt.startsWith(prefix)){
+            
             return is_name(txt.slice(prefix.length))
         }
     }    
