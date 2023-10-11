@@ -12,6 +12,11 @@
     import { is_link } from "./util"
     import { store } from "./data_store"
 
+    if (browser){
+        document.title = window.location.hostname
+    }
+    
+
 
     var homebutton:string
     var fulltitle:string = "<br>"
