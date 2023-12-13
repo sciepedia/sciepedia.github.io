@@ -51,7 +51,6 @@ export class Note {
 
         this.element.appendChild(this.head.element)
         this.element.appendChild(this.body.element)
-
     }
 
     save(){
@@ -142,17 +141,18 @@ export class Head {
 
         let sharebutton = document.createElement("span")
         sharebutton.innerHTML = "share"
-        // sharebutton.classList.add("navbutton")
         sharebutton.classList.add("sharebutton")
         sharebutton.classList.add("navbutton")
         sharebutton.addEventListener("click",async(_)=>{
 
-            let name = (this.note.data.Path.pub?"_":"")+this.note.data.Path.location.join(".")
+            let name = encodeURI((this.note.data.Path.pub?"":"_")+this.note.data.Path.location.join("."))
+            if (!name.includes(":")){
+                name += ":" + this.note.data.Path.author
+            }
             await navigator.clipboard.writeText(location.origin + "?"+name);
             sharebutton.innerHTML = "copied"
         })
-        this.element.appendChild(sharebutton)
-        
+        this.element.appendChild(sharebutton)   
     }
 
     create_expand_button(){
@@ -162,7 +162,6 @@ export class Head {
         expandbutton.classList.add("navbutton")
 
         this.element.appendChild(expandbutton)
-
         const page = document.querySelector("#page")!
 
         const revertroot = (_:MouseEvent)=>{
@@ -174,7 +173,6 @@ export class Head {
             let base_note = new Note(root.location[root.location.length-1],root)
             page.append(base_note.element)
             title_list = [{element:base_note.head.title_element,fullpath:root}]
-
             let newUrl = window.location.protocol + '//' + window.location.host + window.location.pathname + '?' + root.location.join(".")
             window.history.pushState({path: newUrl}, '', newUrl)
 
@@ -308,8 +306,7 @@ export class Body {
     }
 
     on_paste = (event:ClipboardEvent)=>{
-            
-        // is paste in this element?
+
         var target = event.target as HTMLElement
         while (target.nodeName != "DIV"){
             target = target.parentElement!
@@ -336,28 +333,13 @@ export class Body {
                 dest = "#"+dest
             }
 
-
-            // if (dest.startsWith(this.owner.path) && dest.length > this.owner.path.length){
-            //     dest = dest.substring(this.owner.path.length)
-            // }else{
-            //     if (this.owner.path.includes(".")){
-            //         const prepath = this.owner.path.split(".").slice(0,-1).join(".")
-            //         if (dest.startsWith(prepath)&& dest.length > prepath.length){
-            //             dest = "."+dest.substring(prepath.length)
-            //         }
-            //     }
-            // }
-            
             const link = new Link(dest,this, false)
             this.insert_text(link.element)
 
         }else{
 
             console.log("pasting normal text",paste);
-            //pasting normal text
-            
             event.preventDefault();
-
             this.insert_text(document.createTextNode(paste))
 
             if (paste.includes("\n")){
@@ -370,16 +352,9 @@ export class Body {
 
     on_copy(e:ClipboardEvent){
 
-        // Prevent the default Range.set action
         e.preventDefault();
-
-        // Get the selected text
         let selectedText = window.getSelection()!.toString();
-
-        // Modify the selected text
         let modifiedText = selectedText.replaceAll("\n\n","\n")
-
-        // Copy the modified text to the clipboard
         e.clipboardData!.setData('text/plain', modifiedText);
     }
 
@@ -412,14 +387,12 @@ export class Body {
         }
         selection.collapseToEnd()
 
-        //put caret at end of inserted element
         const range = document.createRange();
         range.selectNodeContents(element);
         range.collapse(false);
         const sel = window.getSelection()!;
         sel.removeAllRanges();
         sel.addRange(range);
-
     }
 
     free(){
@@ -456,17 +429,11 @@ export class Body {
             return p
         }
     
-        //first make all space to nonbreak space
         txt = txt.replaceAll(" ", "\xa0")
-
-        //now make spaces between words breakable again :)
         txt = txt.replace(/(\S)\u00A0(\S)/g, "$1 $2");
-    
-        // let words = txt.split(" ")
-        let words = txt.split(/(\s+)/);
-    
+        let words = txt.split(/(\s+)/);    
         let p = document.createElement("p")
-    
+
         let nodes = words.map( w=>{
             
             if (is_link(w)){
@@ -511,8 +478,6 @@ export class Body {
     }
 
     async on_input(e:Event){
-
-
         if(this.content.contentEditable != "true"){return}
 
         if (e.target != this.content){return}
@@ -743,14 +708,10 @@ function put_caret(line:HTMLParagraphElement, offset:number):Node|null{
             
             link = next
         }
-    }else{
-        
     }
 
     setCaret(next!,offset)
-
     return link
-    // next?.after(pred)
 }
 
 export function setCaret(node:Node,offset:number) {

@@ -15,8 +15,6 @@
     if (browser){
         document.title = window.location.hostname
     }
-    
-
 
     var homebutton:string
     var fulltitle:string = "<br>"
@@ -53,9 +51,6 @@ If you want to learn more, check out: #sciepedia:kormann
     let hist: PathData[]
     let logged_in_prefix = $username[0]
 
-    console.log($username);
-    
-
 
     async function setup(){
 
@@ -79,11 +74,11 @@ If you want to learn more, check out: #sciepedia:kormann
     
         hist = [get_path_data(root.path)]
         if(search && search.length>1){
-            search  = search.slice(1)
-            // search = "#" +search
+            search = decodeURI(search.slice(1))
             if (!is_link(search)){
                 search= "#" + search
             }
+            console.log("searching:",search)
             if (is_link(search)){
                 hist.push(hist[0])
                 root.path = search

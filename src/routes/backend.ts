@@ -80,8 +80,6 @@ export async function getcomments(id:uuid){
     return await Promise.all(
         data!.map(async (d) => {
           const Path = new PathData(d.is_public, await get_user_name(d.user_id), d.title.split("."));
-          console.log(Path);
-      
           return {
             Path,
             Content: d.content,

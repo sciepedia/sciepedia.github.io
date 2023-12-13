@@ -32,7 +32,7 @@ export class CommentSection{
         this.element.appendChild(comment_button)
 
         getcomments(parent.owner.data.id).then(comments=>comments.forEach(data=>{
-            console.log(data);
+
             const newcomment = new CommentElement(data)
             this.comments.push(newcomment)
             this.content.appendChild(newcomment.element)
@@ -69,7 +69,6 @@ export class CommentSection{
         newcomment.body.save()
         make_editable(newcomment.body)
         newcomment.body.element.focus()
-        console.log(newcomment.body.element);
         
     }
 

@@ -242,7 +242,6 @@ export class PathData{
     pretty(){
 
         const res = this.location.join(".")+`<span class='author'> by ${this.author}</span>`
-        console.log(res)
         return res
         
     }
