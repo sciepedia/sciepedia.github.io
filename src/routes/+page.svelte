@@ -68,7 +68,8 @@ If you want to learn more, check out: #sciepedia:kormann
 
         pred.id = "pred"
 
-        homebutton = `<a href=/ onclick="window.location.href = '${window.origin}'; location.reload();" id=homebtn>sciepedia</a>`
+        // homebutton = `<a href=/ onclick="window.location.href = '${window.origin}'; location.reload();" id=homebtn>sciepedia</a>`
+        homebutton = `<a href=/ onclick="setTimeout(()=>{window.location.href='${window.origin}'})" id=homebtn>sciepedia</a>`
         fulltitle = homebutton
         let search = window.location.search 
     
