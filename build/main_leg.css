@@ -61,9 +61,6 @@ body.light{
 
 #homebtn{
 
-	/* padding-left:calc(max(0px,calc(50vw - 50vh) + 2.5vw)); */
-	/* top:2em; */
-	/* position: relative; */
 	text-decoration: none;
 	color: #ffe6af5d;
 	color:var(--brown);
@@ -132,6 +129,10 @@ div.editable>p>span.typo{
 	margin:0;
 	/* border-bottom: 2px solid var(--focus2); */
 
+}
+
+.image{
+	max-width: 100%;
 }
 
 

@@ -68,7 +68,6 @@ If you want to learn more, check out: #sciepedia:kormann
 
         pred.id = "pred"
 
-        // homebutton = `<a href=/ onclick="window.location.href = '${window.origin}'; location.reload();" id=homebtn>sciepedia</a>`
         homebutton = `<a href=/ onclick="setTimeout(()=>{window.location.href='${window.origin}'})" id=homebtn>sciepedia</a>`
         fulltitle = homebutton
         let search = window.location.search 
@@ -99,8 +98,7 @@ If you want to learn more, check out: #sciepedia:kormann
                     }
                 }
             })
-            // fulltitle = top_input.fullpath
-            // fulltitle = pretty_path(fulltitle)
+
         })
         const tut_path = get_path_data('_tutorial:'+ $username)
         if (!store.has(tut_path)){

@@ -7,7 +7,8 @@ import { set_store_value } from 'svelte/internal';
 import type { Note } from './note';
 
 const pub_anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InliZm9jbmJkZHZleXloZml6dmpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYzMzMzMzMsImV4cCI6MjAxMTkwOTMzM30.8YyrLgEjoBRBgs5IG4ekuY8qjqvEnjtviRygTtARIx8"
-const supabase = createClient('https://ybfocnbddveyyhfizvjj.supabase.co', pub_anon_key)
+const supabase_url = 'https://ybfocnbddveyyhfizvjj.supabase.co'
+const supabase = createClient(supabase_url, pub_anon_key)
 
 export async function login(email:string, password:String){
     
@@ -145,6 +146,16 @@ export function rate(key:string, rating:number){
     console.log("rating",key,rating);
 }
 
-export async function pick_username(username:String){
+// export async function pick_username(username:String){
 
+// }
+
+export async function upload_image(path:string, file:File){
+    const {data,error} = await supabase.storage.from("images").upload(path,file)
+    if (error){
+        console.error(error);
+    }
+    // https://ybfocnbddveyyhfizvjj.supabase.co/storage/v1/object/public/images/new%20image
+    const pub_url = supabase_url + "/storage/v1/object/public/images/" + (data!=null ? data.path : path)
+    return pub_url
 }

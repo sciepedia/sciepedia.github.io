@@ -1,5 +1,6 @@
 import { is_http_link, is_link, make_http_link, cleanMarkup } from "./util"
 import { Link, get_link, get_path_data, is_link_element, is_typo_element, type PathData } from "./link"
+import { Image, image_from_file } from "./image"
 import { store, type NoteData, type uuid } from "./data_store"
 
 import { rename_note } from "./renamer"
@@ -318,6 +319,20 @@ export class Body {
             return
         }
 
+        const clip = event.clipboardData!
+
+        for (var i = 0; i < clip.items.length; i++) {
+            if (clip.items[i].type.indexOf('image') !== -1) {
+
+                var blob = clip.items[i].getAsFile();
+                if (blob){
+                    const img = image_from_file(blob)
+                    this.insert_text(img.element)
+                }
+            }
+        }
+
+
         let paste = (event.clipboardData )!.getData("text");
 
         paste = cleanMarkup(paste)
@@ -335,6 +350,7 @@ export class Body {
 
             const link = new Link(dest,this, false)
             this.insert_text(link.element)
+
 
         }else{
 
@@ -441,6 +457,9 @@ export class Body {
                 return link.element
             }else if(is_http_link(w)){
                 return make_http_link(w)
+            }else if(w.startsWith("##image:")){
+                const img = new Image(w.slice(8))
+                return img.element
             }else {
 
                 const typo = typo_element(w)
@@ -645,9 +664,11 @@ export class Body {
 
         let lines:string[] = []
         this.content.childNodes.forEach(paragraph => {
-            if (paragraph.nodeName == "P"){
-                
+            if (paragraph.nodeName == "P"){                
                 lines.push(this.get_line_text(paragraph as HTMLParagraphElement))
+            }else{
+                console.log(paragraph.nodeName);
+                
             }
         });
         
@@ -674,6 +695,10 @@ export class Body {
                 }else{
                     txt += link?.name
                 }
+            }else if (node.nodeName == 'IMG') {
+                const img = node as HTMLImageElement
+                txt += `##image:${img.src}`
+
             }else if (node.nodeName == "#text" || node.nodeName == "SPAN"){
                 txt+= node.textContent!
             }

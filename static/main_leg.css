@@ -78,6 +78,10 @@ body.light{
 	color: var(--color);
 }
 
+.image{
+	max-width: 100%;
+}
+
 .link{
 	color:var(--blue);
 	caret-color: var(--color);
