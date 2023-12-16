@@ -4,13 +4,15 @@ import { PathData, get_path_data } from "./link";
 import { is_link } from "./util";
 
 export type uuid = `${string}-${string}-${string}-${string}-${string}`
-export type NoteData = {Path:PathData, Content:string, comments?:uuid[], id:uuid, comment_of?:uuid}
+export type language = 'txt' | 'js'
+export type NoteData = {Path:PathData, Content:string, language?:language, comments?:uuid[], id:uuid, comment_of?:uuid}
 
 export let store = {
 
     getitem : (Path:PathData,callback:(s:NoteData)=>void)=>{
         
-        var res:NoteData = {Path, Content:"…",id:crypto.randomUUID()}
+        
+        var res:NoteData = {Path, Content:"…",language:Path.location.slice(-1)[0]=='js'?"js":"txt",id:crypto.randomUUID()}
         const key = JSON.stringify(Path)
 
         if (store.has(Path)){
@@ -21,19 +23,23 @@ export let store = {
                 console.warn("error parsing json",localStorage[key])
                 res = {Path, Content:"<Error>",id:"----"};
             }
+
         }
 
         getitem(Path).then(content=> {
             if (content!=null && (content.Content != res.Content || content!.id != res.id)){
                 res = {...res, Content:content!.Content, id:content!.id}
-                localStorage[key] = JSON.stringify(res)                
+                localStorage[key] = JSON.stringify(res)     
+                // res.language = Path.location.slice(-1)[0]=='js'?"js":"txt"           
                 callback(res)
             }
         })
 
         if (res != null){
             res.Path = new PathData(res.Path.pub,res.Path.author,res.Path.location)
-        }        
+        }
+        res.language = Path.location.slice(-1)[0]=='js'?"js":"txt"
+
         return res
     },
 
@@ -64,7 +70,6 @@ export let store = {
         }
     },
     
-
     set_linkstate:(path:PathData, state:boolean[])=>{
         localStorage["ls_"+JSON.stringify(path)] = JSON.stringify(state)
     },

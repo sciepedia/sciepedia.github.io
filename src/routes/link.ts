@@ -156,8 +156,9 @@ function get_compact_link_name(path:string){
         }
     })
 
-    // remove anything before the last dot 
-    let name = path.replace(/.*\./g,"")
+    // remove anything before the last dot
+    const words = path.split(".")
+    let name = words.slice(-1)[0].length > 2 ? words.slice(-1)[0] : words.slice(-2).join(".")
     //remove anything after the first @ or :
     .replace(/[:].*/g,"")
 

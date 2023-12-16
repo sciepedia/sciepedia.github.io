@@ -34,10 +34,16 @@ export class Note {
         }
 
         let content = store.getitem(path, newcontent =>{
+            console.log(newcontent);
+            
             this.body.free()
             this.body.render(newcontent.Content)
+            this.data.language = newcontent.language
+            this.body.set_language(newcontent.language)
         })
+
         this.data = content
+
         
         this.txt = content.Content
         if (this.txt==undefined){
@@ -116,7 +122,6 @@ export class Head {
         {
             let commentbutton = document.createElement("span")
             commentbutton.innerHTML = "comments"
-
             commentbutton.classList.add("sharebutton")
             commentbutton.classList.add("navbutton")
             commentbutton.addEventListener("click",async(_)=>{
@@ -251,7 +256,6 @@ export class Body {
 
         this.comments = content.comments?? []
 
-    
         if (call_hist.length == 0){
             call_hist = [owner.data.Path.tostring()]
         }
@@ -260,10 +264,11 @@ export class Body {
         this.element = document.createElement("div")
         this.element.classList.add("body")
         this.content = document.createElement("div")
-        this.element.appendChild(this.content)
         this.content.classList.add("content")
+        this.element.appendChild(this.content)
 
         this.owner = owner
+
         owner.body = this
 
         this.can_write = this.owner.data.Path.author == get(username)
@@ -288,10 +293,17 @@ export class Body {
             }
         })
 
+        this.set_language(this.owner.data.language)
+
         this.content.addEventListener("input",e=>this.on_input(e))
         this.content.addEventListener("blur",_=> {if(this.editable)make_editable(null)})
         this.content.addEventListener("paste",this.on_paste);
         this.content.addEventListener("copy",this.on_copy)
+        this.content.addEventListener("keydown", (e)=>{
+            if (e.key == "Tab"){
+                e.preventDefault()
+            }
+        })
 
         const linkstate = store.get_linkstate(this.owner.data.Path)
         
@@ -304,6 +316,26 @@ export class Body {
         })
 
         this.commentSection = new CommentSection(this, this.owner.data.Path)
+    }
+
+    set_language(language?:string){        
+        let runbutton = this.element.querySelector(".runbutton")
+        
+        if (language == "txt"){
+            this.content.classList.remove("js")
+            runbutton?.remove()
+        }else if(runbutton == null){
+            this.content.classList.add("js")
+            const runbutton = document.createElement("div")
+            runbutton.innerHTML = "▶"
+            runbutton.classList.add("runbutton")
+            runbutton.addEventListener("click", (e:MouseEvent)=>{
+                runbutton.innerHTML = "O"
+                Function(this.get_content_text())()
+                runbutton.innerHTML = "▶"
+            })
+            this.element.appendChild(runbutton)
+        }
     }
 
     on_paste = (event:ClipboardEvent)=>{
@@ -460,11 +492,12 @@ export class Body {
             }else if(w.startsWith("##image:")){
                 const img = new Image(w.slice(8))
                 return img.element
-            }else {
-
-                const typo = typo_element(w)
-                if (typo != undefined){
-                    return typo
+            }else{
+                if (this.owner.data.language == "txt"){
+                    const typo = typo_element(w)
+                    if (typo != undefined){
+                        return typo
+                    }
                 }
                 return new Text(w)
             }
@@ -478,7 +511,7 @@ export class Body {
     }
 
     spellcheck(){
-
+        if (this.owner.data.language == "js"){return}
         this.content.childNodes.forEach(p=>{
             if (p.nodeName == "P"){
                 p.childNodes.forEach(node=>{
@@ -498,12 +531,12 @@ export class Body {
 
     async on_input(e:Event){
         if(this.content.contentEditable != "true"){return}
-
         if (e.target != this.content){return}
-        
+
         if (e.type == "input" && ( ["¨"].includes ((e as InputEvent).data!) )){
             return
         }
+        
         autocomplete.clear()
 
         const sel = window.getSelection()
