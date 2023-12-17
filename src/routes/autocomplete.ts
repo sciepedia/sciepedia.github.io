@@ -1,43 +1,53 @@
 import { get_link, get_path_data, type Link, type PathData } from "./link";
 import { setCaret } from "./note";
+import { setup_search } from "./search";
 
-export var title_set = new Set<string>()
-var title_list:string[] =[]
+export var title_set = new Set<[string,PathData]>()
+var title_list:[string,PathData][] =[]
 var title_added = false
 
 export function setup_autocomplete(){
-
+    
     for (let index = 0; index < localStorage.length; index++) {
         const key = localStorage.key(index)!
-        if (key!.startsWith("#")){
-            add_title_completion(get_path_data(key))            
-        }
+        try {
+            const d = JSON.parse(key)
+            if (d.location){
+                add_title_completion(d)
+            }
+        }catch{}
     }
+    setup_search()
 }
 
-export function add_title_completion(path:PathData){
 
+export function add_title_completion(path:PathData){
+    const pathstring = path.location.join(".")+":"+path.author
 
     const size = title_set.size
-    for (let index = 0; index < path.location.length; index++) {
-        const sub_title = path.location.slice(0,index+1).join(".")
-        title_set.add(sub_title)
-    }
+    title_set.add([pathstring,path])
+
     if (size != title_set.size){
         title_added = true
     }
 }
 
-function get_completions(content:string){
-    if (title_added){
+export function updated_title_list(){
+    if (title_added){        
         title_list = Array.from(title_set)
-        title_list.sort()
+        title_list.sort()        
         title_added = false
     }
+    return title_list
+}
 
+export function get_completions(content:string, maxres = 10){
+    content = content.replaceAll(" ", "_")
+    
+    updated_title_list()
     var results = [];
-    for (var i = 0; i < title_list.length; i++) {
-        if (title_list[i].toLowerCase().startsWith(content.toLowerCase())) {
+    for (var i = 0; i < title_list.length && results.length < maxres; i++) {
+        if (title_list[i][0].toLowerCase().startsWith(content.toLowerCase())) {
             results.push(title_list[i]);
         }
     }
@@ -71,20 +81,20 @@ export class Autocomplete{
         this.element.id = "autocomplete"
         this.element.innerHTML = ""
 
-        const pred = get_completions(path.tostring()).filter(el => el != path.tostring())
+        //TODO: wrong?
+        const pred = get_completions(path.tostring()).filter(el => el[0] != path.tostring())
 
         if (pred.length == 0){return}
 
         pred.forEach(element => {
 
             const prediction_line = document.createElement("p")
-            prediction_line.innerHTML = element 
+            prediction_line.innerHTML = element[0]
             this.element!.appendChild(prediction_line)
-
 
             prediction_line.addEventListener("click", ()=>{
 
-                link.rename(get_path_data(element))
+                link.rename(get_path_data(element[0]))
                 this.clear()
             });
         });

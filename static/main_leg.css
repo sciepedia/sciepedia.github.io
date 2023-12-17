@@ -179,6 +179,48 @@ div.editable>p>span.typo{
 	/* margin-right:.5em; */
 }
 
+.searchbar{
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.18);
+	z-index: 200;
+	top:0;
+	padding-left: 10vw;
+}
+
+.searchbar>.results{
+	background-color: var(--dark);
+	width: 25em;
+	color:var(--color);
+	padding: 1em;
+	border-radius: 1em;
+	padding-bottom: 0;
+}
+
+.results>p{
+	background-color: var(--focus);
+	padding: .5em;
+	border-radius: .5em;
+}
+
+.results>p:hover{
+	background-color: var(--grey);
+}
+
+
+.searchbar>input{
+	margin-top: 10vw;
+	width:20em;
+	padding:.3em;
+	border-radius: .6em;
+	background-color: var(--focus);
+	border:1em solid var(--dark);
+	box-shadow: 0 0 1em black;
+	color:var(--color);
+	font-size: 1.2em;
+}
+
 .expandbutton{
 	width:2vw;
 	margin-left: 0;
@@ -259,39 +301,28 @@ p{
 
 }
 
-
-
-#loggedin_btn, #light_btn{
-
+#search_btn{
 	border:unset;
-	font-size: 1em;
-
 	font-weight: bold;
-
+	position:fixed;
 	color:var(--dark);
 	background-color: var(--grey);
-	height:2em;
-	width:2em;
-	padding: .2em;
-	border-radius: 1em;
-
-	position:fixed;
-	top:1em;
-	right:1em;
-	z-index: 100;
-
-}
-
-#light_btn{
-
+	z-index: 200;
 	font-size: 1.5em;
+	
+	/* width:1.4em; */
 	height:1.4em;
-	width: 1.4em;
-	padding: .1em;
+	padding: .1em .4em;
 	border-radius: .7em;
-
 	top: .6em;
 	left:.6em;
+}
+
+span#search_btn{
+	top:1em;
+	font-size: 1em;
+	/* width: 8em; */
+	cursor: pointer;
 }
 
 .slider{
@@ -358,7 +389,6 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 
-  
 @media all and (min-width:0px) and (max-width: 520px) {
 /* put your css styles in here */
 

@@ -48,9 +48,9 @@ If you want to learn more, check out: #sciepedia:kormann
     import {root} from "./note"
     import { lightmode, pwdhash, username } from "./store";
     import { PathData, get_path_data } from "./link";
+    import Searchbar from "./searchbar.svelte";
     let hist: PathData[]
     let logged_in_prefix = $username[0]
-
 
     async function setup(){
 
@@ -59,9 +59,10 @@ If you want to learn more, check out: #sciepedia:kormann
         window.fetch = data.fetch
 
 
-        if($lightmode){
-            document.body.classList.add("light")
-        }   
+        lightmode.subscribe(val=>{
+            if (val){document.body.classList.add("light")}
+            else{document.body.classList.remove("light")}
+        })
 
         pred = document.createElement("div")
         pred.innerHTML = "<p>this is a pred</p><p>this is a pred</p><p>this is a pred</p>"
@@ -149,16 +150,18 @@ function toggle_lightmode(){
 
 </script>
 
+<Searchbar />
+
 <h2 id=fullheader >{@html fulltitle}</h2>
 
 
-<button id = "light_btn" on:click={toggle_lightmode} >❋</button>
-
+<!-- <button id = "light_btn" on:click={toggle_lightmode} >❋</button> -->
+<!-- 
 <button id = "loggedin_btn" on:click={()=>{
 
     window.location.pathname='login'
 
-}}> {logged_in_prefix}</button>
+}}> {logged_in_prefix}</button> -->
 
 <div id =page>
 

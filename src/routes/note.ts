@@ -115,6 +115,7 @@ export class Head {
 
         this.element = document.createElement("div")
         this.element.classList.add("head")
+        this.element.spellcheck = false
         this.create_expand_button()
 
         this.create_share_button()
@@ -263,6 +264,7 @@ export class Body {
 
         this.element = document.createElement("div")
         this.element.classList.add("body")
+        this.element.spellcheck = false
         this.content = document.createElement("div")
         this.content.classList.add("content")
         this.element.appendChild(this.content)
@@ -302,7 +304,7 @@ export class Body {
         this.content.addEventListener("keydown", (e)=>{
             if (e.key == "Tab"){
                 e.preventDefault()
-            }
+            }            
         })
 
         const linkstate = store.get_linkstate(this.owner.data.Path)
