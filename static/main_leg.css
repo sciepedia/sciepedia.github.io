@@ -202,10 +202,18 @@ div.editable>p>span.typo{
 	background-color: var(--focus);
 	padding: .5em;
 	border-radius: .5em;
+	cursor: pointer;
 }
 
+.results>p.highlighted{
+	border:2px solid var(--color);
+}
+
+
 .results>p:hover{
-	background-color: var(--grey);
+	/* background-color: var(--grey); */
+	color: var(--active);
+	box-shadow: 0 0 5px var(--active);
 }
 
 
@@ -381,8 +389,8 @@ input[type=range]::-webkit-slider-thumb {
 	color:var(--blue);
 	margin: 0;
 	padding:.1em;
-
 }
+
 
 #autocomplete>p:hover{
 	background-color:  var(--focus);

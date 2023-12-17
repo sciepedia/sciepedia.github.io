@@ -7,23 +7,12 @@
     import { prevent_default } from "svelte/internal";
     import { search, type searchResult } from "./search";
 
-
-
-
     let searching:boolean = false
     let query:string = ""
 
     type restulttype = "page"
-    // type searchresult = {type:restulttype, rep:string, data:PathData}
-
     let results:searchResult[] = []
-
-    // function typerep(t:restulttype){
-    //     if (t == "page"){
-    //         return "⎘"
-    //     }
-    // }
-
+    let highlight_index = 0
 
     if (browser){
         window.addEventListener("keydown",e=>{
@@ -39,8 +28,22 @@
 
         })
         window.addEventListener("keyup",(e)=>{
+
+            if(!searching){return}
+            
             if (e.key == "Meta" || e.key == "Escape"){
+            }else if (e.key=="ArrowUp"){
+                highlight_index = Math.max(highlight_index-1,0)
+            }else if (e.key=="ArrowDown"){
+                highlight_index = Math.min(highlight_index+1,results.length-1)
+            }else if (e.key=="Tab"){
+                query = results[highlight_index].rep
+                e.preventDefault()
+                bar.focus()
+            }else if (e.key=="Enter"){
+                results[highlight_index].executor()
             }else{
+                highlight_index = 0
                 let res = search(query)
                 results = res
             }
@@ -81,9 +84,9 @@
 
     <input placeholder="search..." bind:this={bar} type="text" bind:value={query}>
     <div class="results">
-        {#each results as res}        
+        {#each results as res, i}        
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <p on:click={()=>{res.executor()}}> {res.rep}</p>
+            <p class={i==highlight_index ? "highlighted" : ""} on:click={()=>{res.executor()}}> {res.rep}</p>
             <br>
         {/each}
     </div>

@@ -141,7 +141,7 @@
                 <p class=error>{neterror}</p>
                 <br>
                 <br>
-                <button class = "switchbtn" on:click={()=>new_account = false}>already have an account? Login instead.</button>
+                <button class = "switchbtn" on:click={()=>new_account = false}>Already have an account? Login instead.</button>
 
 
             </div>
@@ -193,7 +193,7 @@
                 <p class=error>{neterror}</p>
                 <br>
                 <br>
-                <button class = "switchbtn" on:click={()=>new_account = true}> hast du noch keinen Account? stattdessen registrieren</button>
+                <button class = "switchbtn" on:click={()=>new_account = true}> Don't have an account? Sign up.</button>
 
 
             </div>
