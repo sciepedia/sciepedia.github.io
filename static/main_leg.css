@@ -186,8 +186,24 @@ div.editable>p>span.typo{
 	background-color: rgba(0, 0, 0, 0.18);
 	z-index: 200;
 	top:0;
-	padding-left: 10vw;
+	/* padding-left: 10vw; */
+	padding-left:max(0px,calc(50vw - 50vh));
+	padding-left: calc(50vw - 20em);
 }
+
+
+.searchbar>input{
+	margin-top: 10vw;
+	width:20em;
+	padding:.3em;
+	border-radius: .6em;
+	background-color: var(--focus);
+	border:1em solid var(--dark);
+	box-shadow: 0 0 1em black;
+	color:var(--color);
+	font-size: 1.2em;
+}
+
 
 .searchbar>.results{
 	background-color: var(--dark);
@@ -216,18 +232,6 @@ div.editable>p>span.typo{
 	box-shadow: 0 0 5px var(--active);
 }
 
-
-.searchbar>input{
-	margin-top: 10vw;
-	width:20em;
-	padding:.3em;
-	border-radius: .6em;
-	background-color: var(--focus);
-	border:1em solid var(--dark);
-	box-shadow: 0 0 1em black;
-	color:var(--color);
-	font-size: 1.2em;
-}
 
 .expandbutton{
 	width:2vw;
