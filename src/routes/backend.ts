@@ -159,3 +159,5 @@ export async function upload_image(path:string, file:File){
     const pub_url = supabase_url + "/storage/v1/object/public/images/" + (data!=null ? data.path : path)
     return pub_url
 }
+
+

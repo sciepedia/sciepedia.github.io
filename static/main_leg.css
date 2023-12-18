@@ -183,12 +183,12 @@ div.editable>p>span.typo{
 	position: fixed;
 	width: 100%;
 	height: 100%;
-	background-color: rgba(0, 0, 0, 0.18);
+	background-color: rgba(20, 20, 20, 0.5);
 	z-index: 200;
 	top:0;
 	/* padding-left: 10vw; */
 	padding-left:max(0px,calc(50vw - 50vh));
-	padding-left: calc(50vw - 20em);
+	padding-left: max(0px,calc(50vw - 10em));
 }
 
 

@@ -30,7 +30,7 @@
         window.addEventListener("keyup",(e)=>{
 
             if(!searching){return}
-            
+
             if (e.key == "Meta" || e.key == "Escape"){
             }else if (e.key=="ArrowUp"){
                 highlight_index = Math.max(highlight_index-1,0)
@@ -41,18 +41,16 @@
                 e.preventDefault()
                 bar.focus()
             }else if (e.key=="Enter"){
-                results[highlight_index].executor()
+                results[highlight_index].executor(query)
             }else{
+                if (query == ""){results = []; return}
                 highlight_index = 0
                 let res = search(query)
                 results = res
             }
-            
         })
 
         window.addEventListener("click",e=>{
-            console.log((e.target as HTMLElement) .id);
-            
             if((e.target as HTMLElement).id == "search_btn"){return}
             searching = false
             searchhint = false
@@ -86,7 +84,7 @@
     <div class="results">
         {#each results as res, i}        
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <p class={i==highlight_index ? "highlighted" : ""} on:click={()=>{res.executor()}}> {res.rep}</p>
+            <p class={i==highlight_index ? "highlighted" : ""} on:click={()=>{res.executor(query)}}> {res.rep}</p>
             <br>
         {/each}
     </div>

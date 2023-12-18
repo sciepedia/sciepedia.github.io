@@ -20,7 +20,6 @@ export function setup_autocomplete(){
     setup_search()
 }
 
-
 export function add_title_completion(path:PathData){
     const pathstring = path.location.join(".")+":"+path.author
 

@@ -139,10 +139,19 @@ export class Head {
         }
 
         const loc = this.note.data.Path.location
-        const parts = loc.slice(loc.length - title.split(".").filter(k=>k!="").length)        
-        const ht = parts.join(".").replaceAll("_"," ") + (title.includes(":") ? `<span class='author'> by ${this.note.data.Path.author} </span>`:"")
+
+        let parts
+        if (title.startsWith("..")){
+            parts = title.split(".").slice(2)
+        }else if (title.startsWith(".")){
+            parts = title.split(".").slice(1)
+        }else{   
+            parts = loc
+        }
+        const ht = parts.join(".").replaceAll("_"," ") + (`<span class='author'> by ${this.note.data.Path.author} </span>`)
         this.title_element.innerHTML = ht
     }
+
 
     create_share_button(){
 
@@ -701,9 +710,8 @@ export class Body {
         this.content.childNodes.forEach(paragraph => {
             if (paragraph.nodeName == "P"){                
                 lines.push(this.get_line_text(paragraph as HTMLParagraphElement))
-            }else{
-                console.log(paragraph.nodeName);
-                
+            // }else{
+                // console.log(paragraph.nodeName);
             }
         });
         
@@ -744,7 +752,6 @@ export class Body {
         return txt
     }
 }
-
 
 function put_caret(line:HTMLParagraphElement, offset:number):Node|null{
 
