@@ -738,9 +738,10 @@ export class Body {
                 }else{
                     txt += link?.name
                 }
-            }else if (node.nodeName == 'IMG') {
-                const img = node as HTMLImageElement
-                txt += `##image:${img.src}`
+            }else if ((node as HTMLElement).classList && (node as HTMLElement).classList.contains("image")){
+
+                let img = (node as HTMLImageElement)
+                txt += `##image:${img?.src}#${encodeURI(img?.style.width)}`
 
             }else if (node.nodeName == "#text" || node.nodeName == "SPAN"){
                 txt+= node.textContent!
