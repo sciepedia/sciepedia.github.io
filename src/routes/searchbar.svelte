@@ -6,7 +6,7 @@
     import { PathData } from "./link";
     import { insert_hydration, prevent_default } from "svelte/internal";
     import { search, setup_search, type searchItem } from "./search";
-    import { TrOCRPreTrainedModel } from "@xenova/transformers";
+
 
     let searching:boolean = false
     let query:string = ""
