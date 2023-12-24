@@ -65,8 +65,3 @@ export function search(query:string,maxres=10):searchItem[]{
     return res
 }
 
-
-import { FalconForCausalLM, env, pipeline } from "@xenova/transformers"
-import type { SupabaseAuthClient } from "@supabase/supabase-js/dist/module/lib/SupabaseAuthClient"
-
-console.log(pipeline);
