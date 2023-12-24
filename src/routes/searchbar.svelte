@@ -6,6 +6,8 @@
     import { PathData } from "./link";
     import { insert_hydration, prevent_default } from "svelte/internal";
     import { search, setup_search, type searchItem } from "./search";
+    import { store } from "./data_store";
+    import { Note } from "./note";
 
 
     let searching:boolean = false
@@ -16,6 +18,7 @@
     let highlight_index = 0
 
     let fillsuggestion = ""
+
 
     if (browser){
         window.addEventListener("keydown",e=>{
@@ -32,34 +35,45 @@
         window.addEventListener("keyup",(e)=>{
 
             if(!searching){return}
-
             if (e.key == "Meta" || e.key == "Escape"){
             }else if (e.key=="ArrowUp"){
                 highlight_index = Math.max(highlight_index-1,0)
             }else if (e.key=="ArrowDown"){
                 highlight_index = Math.min(highlight_index+1,results.length-1)
             }else if (e.key=="Tab"){
+                e.preventDefault()
                 let tag = results[highlight_index].tags
-                console.log("tabbing");
-                console.log(tag);
                 
                 if (typeof(tag)=="string" ){
                     tag = tag.split(":")[0]
-                    console.log(tag);
                     tag = tag.split(".").slice(0,query.split(".").length).join(".")
-                    
                     query = tag
                     bar.focus()
                 }
-                e.preventDefault()
+
             }else if (e.key=="Enter"){
                 results[highlight_index].executor(query)
             }else{
                 if (query == ""){results = []; return}
                 highlight_index = 0
                 results = search(query)
+                if (results.length == 0){
+                    results = [
+                        {
+                            tags: (s)=>true, rep:x=>`⚙️ create Page: ${x}`, executor:(x:string)=>{
+                                const nn: Note = new Note("#"+x)
+                                store.setitem(nn.data)
+                                window.location.search = x
+                        }},{
+                            tags: s=>true, rep:x=> `⚙️ create secret Page: ${x}`, executor:(x:string)=>{
+                                const nn: Note = new Note("_"+x)
+                                store.setitem(nn.data)
+                                window.location.search = "_"+x
+                            }
+                        }
+                    ]
+                }
                 let topres = results[0]
-                console.log(topres.tags);
             }
         })
 

@@ -3,6 +3,8 @@ import { title_set, updated_title_list } from "./autocomplete"
 import { PathData } from "./link"
 import { lightmode, searchhist } from "./store"
 import { openaisetup } from "./ai"
+import { store } from "./data_store"
+import { Note } from "./note"
 
 
 export type searchTag = string | ((x:string)=>boolean) | searchTag[]
@@ -25,18 +27,11 @@ let tools: searchItem[]= [
     openaisetup,
 ]
 
-const tools2: searchItem[] = [{tags: (s)=>!s.includes(" "), rep:x=>`⚙️ create Page: ${x}`, executor:(x:string)=>{
-    console.log("redirect to ",x);
-
-    window.location.search = x
-}}]
-
 let searchspace:searchItem[]
 
 export function setup_search(){
     let notelist:searchItem[] = updated_title_list().map(item=>{
-        const pretty = decodeURI(item[0]).replaceAll("_", " ")
-
+        const pretty = decodeURI(item[0]).replaceAll("_", " ").trimStart()
         const rep = (item[1].pub ? "📃 " : "🔒 ") + pretty.replace(":"," by ")
 
         return {
@@ -53,7 +48,7 @@ export function setup_search(){
         }
     }).sort((a,b)=> (get(searchhist)[b.rep]?? 0) - (get(searchhist)[a.rep] ?? 0));
 
-    searchspace = tools.concat(...notelist, ...tools2)
+    searchspace = tools.concat(...notelist) //, ...tools2)
 }
 
 export function search(query:string,maxres=10):searchItem[]{

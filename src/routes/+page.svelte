@@ -110,7 +110,6 @@ If you want to learn more, check out: #sciepedia:kormann
         if(!store.has(home_path)){
             const data = ({Path:home_path,Content:"welcome to sciepedia\ntry out the tutorial: _tutorial",id:crypto.randomUUID()})
             localStorage[JSON.stringify(data.Path)] = JSON.stringify(data)
-
         }
         
         let home = new Note("_home",home_path)

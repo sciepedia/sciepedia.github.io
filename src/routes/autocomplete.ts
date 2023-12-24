@@ -21,7 +21,8 @@ export function setup_autocomplete(){
 
 export function add_title_completion(path:PathData){
 
-    const pathstring = path.location.join(".")+":"+path.author
+    const pathstring = (path.pub?"":"_") + path.location.join(".")+":"+path.author
+    
     const size = title_set.size
     title_set.set(pathstring,path)
 
@@ -33,9 +34,9 @@ export function add_title_completion(path:PathData){
 export function updated_title_list(){
     if (title_added){        
         title_list = Array.from(title_set)
-        title_list.sort()        
+        title_list.sort((a,b)=>a[0].localeCompare(b[0]))
         title_added = false
-    }
+    }        
     return title_list
 }
 
@@ -118,7 +119,6 @@ export class Autocomplete{
             prediction_line.innerHTML = element 
             this.element!.appendChild(prediction_line)
 
-
             prediction_line.addEventListener("click", ()=>{
 
                 const newtext = new Text(element)
@@ -130,7 +130,6 @@ export class Autocomplete{
         });
         parent.appendChild(this.element)
 
-        
     }
 
     clear(){
