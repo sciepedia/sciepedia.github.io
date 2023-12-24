@@ -7,15 +7,15 @@
 		<link rel="icon" href="./favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta http-equiv="content-security-policy" content="">
-		<link rel="modulepreload" href="./_app/immutable/entry/start.331646f5.js">
-		<link rel="modulepreload" href="./_app/immutable/chunks/index.4cf10c19.js">
-		<link rel="modulepreload" href="./_app/immutable/chunks/singletons.6e76eed7.js">
-		<link rel="modulepreload" href="./_app/immutable/chunks/index.9af3bf8b.js">
-		<link rel="modulepreload" href="./_app/immutable/entry/app.d6012691.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/start.2d4b08e4.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.88c76112.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/singletons.46155ff3.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.50189160.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.888b8bc6.js">
 		<link rel="modulepreload" href="./_app/immutable/chunks/preload-helper.41c905a7.js">
-		<link rel="modulepreload" href="./_app/immutable/nodes/0.a71a95f2.js">
-		<link rel="modulepreload" href="./_app/immutable/nodes/2.ae38fc18.js">
-		<link rel="modulepreload" href="./_app/immutable/chunks/note.1bc9795f.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/0.b9324590.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/2.de2026ca.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/note.b4895ffc.js">
 		<link rel="stylesheet" href="./main_leg.css">
 		<link rel="stylesheet" href="./rating.css">
 		<title>sciepedia</title>
@@ -27,9 +27,9 @@
 <button id="search_btn">⚙︎</button>
 
 
-<div class="searchbar" hidden><input placeholder="search..." type="text" value="">
-    <div class="results"></div>
-</div>
+<div class="searchbar" hidden><p id="searchsuggestion"></p>
+    <input placeholder="search..." type="text" value="">
+    <div class="results"></div></div>
 
 <h2 id="fullheader"><!-- HTML_TAG_START --><br><!-- HTML_TAG_END --></h2>
 
@@ -43,7 +43,7 @@
 			
 			<script>
 				{
-					__sveltekit_p4z8kc = {
+					__sveltekit_15sz1cg = {
 						base: new URL(".", location).pathname.slice(0, -1),
 						env: {}
 					};
@@ -53,8 +53,8 @@
 					const data = [null,null];
 
 					Promise.all([
-						import("./_app/immutable/entry/start.331646f5.js"),
-						import("./_app/immutable/entry/app.d6012691.js")
+						import("./_app/immutable/entry/start.2d4b08e4.js"),
+						import("./_app/immutable/entry/app.888b8bc6.js")
 					]).then(([kit, app]) => {
 						kit.start(app, element, {
 							node_ids: [0, 2],
