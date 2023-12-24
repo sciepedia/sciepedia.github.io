@@ -7,15 +7,15 @@ import { openaisetup } from "./ai"
 
 export type searchTag = string | ((x:string)=>boolean) | searchTag[]
 function check_tag(tag:searchTag, query:string):boolean{
+    
     if (typeof(tag)== "string")return tag.startsWith(query)
     if (typeof(tag)=="function") return tag(query)
     return tag.reduce((p,n)=>(p || check_tag(n, query)),false)
 }
 export type itemRep = string | ((x:string)=>string)
-
 export type searchItem = {tags: searchTag, rep:itemRep, executor: Function, }
 
-let searchspace: searchItem[]= [
+let tools: searchItem[]= [
     {tags:["lightmode", "darkmode"], rep: "⚙️ switch lightmode", executor:()=>{
         lightmode.set(!get(lightmode))
     }},
@@ -23,16 +23,24 @@ let searchspace: searchItem[]= [
         window.location.pathname = "login"
     }},
     openaisetup,
-    
 ]
+
+const tools2: searchItem[] = [{tags: (s)=>!s.includes(" "), rep:x=>`⚙️ create Page: ${x}`, executor:(x:string)=>{
+    console.log("redirect to ",x);
+
+    window.location.search = x
+}}]
+
+let searchspace:searchItem[]
+
 export function setup_search(){
-    let titles = updated_title_list().map(item=>{
+    let notelist:searchItem[] = updated_title_list().map(item=>{
         const pretty = decodeURI(item[0]).replaceAll("_", " ")
 
         const rep = (item[1].pub ? "📃 " : "🔒 ") + pretty.replace(":"," by ")
 
         return {
-            tags:[pretty],
+            tags:pretty,
             rep,
             executor: ()=> {
                 const data = new PathData(item[1].pub, item[1].author, item[1].location)
@@ -40,30 +48,25 @@ export function setup_search(){
                 window.location.search = path.replace("#", "")
                 searchhist.update(h => {h[rep] = Date.now();return h})
                 console.log(get(searchhist));
-                
+
             }
         }
     }).sort((a,b)=> (get(searchhist)[b.rep]?? 0) - (get(searchhist)[a.rep] ?? 0));
 
-    searchspace.push(...titles,
-        {tags: (s)=>!s.includes(" "), rep:x=>`⚙️ create Page: ${x}`, executor:(x:string)=>{
-        console.log("redirect to ",x);
-
-        window.location.search = x
-    }})
-
+    searchspace = tools.concat(...notelist, ...tools2)
 }
 
-export type searchResult = {rep:string, executor: Function}
+export function search(query:string,maxres=10):searchItem[]{
 
-export function search(query:string,maxres=10):searchResult[]{
-    return searchspace
+    let res = searchspace
         .filter(item=>check_tag(item.tags, query))
         .slice(0,maxres)
-        .map(item=>{return {rep: typeof(item.rep)=="string" ? item.rep: item.rep(query),executor:item.executor}})
+        // .map(item=>{return {rep: typeof(item.rep)=="string" ? item.rep: item.rep(query),executor:item.executor}})
+    return res
 }
 
 
 import { FalconForCausalLM, env, pipeline } from "@xenova/transformers"
+import type { SupabaseAuthClient } from "@supabase/supabase-js/dist/module/lib/SupabaseAuthClient"
 
 console.log(pipeline);

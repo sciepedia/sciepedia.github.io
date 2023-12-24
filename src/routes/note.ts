@@ -311,6 +311,7 @@ export class Body {
         this.content.addEventListener("paste",this.on_paste);
         this.content.addEventListener("copy",this.on_copy)
         this.content.addEventListener("keydown", (e)=>{
+
             if (e.key == "Tab"){
                 e.preventDefault()
             }            

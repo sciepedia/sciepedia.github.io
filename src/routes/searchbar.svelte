@@ -4,15 +4,18 @@
     import { tick } from "svelte";
     import { get_completions } from "./autocomplete";
     import { PathData } from "./link";
-    import { prevent_default } from "svelte/internal";
-    import { search, type searchResult } from "./search";
+    import { insert_hydration, prevent_default } from "svelte/internal";
+    import { search, setup_search, type searchItem } from "./search";
+    import { TrOCRPreTrainedModel } from "@xenova/transformers";
 
     let searching:boolean = false
     let query:string = ""
 
     type restulttype = "page"
-    let results:searchResult[] = []
+    let results:searchItem[] = []
     let highlight_index = 0
+
+    let fillsuggestion = ""
 
     if (browser){
         window.addEventListener("keydown",e=>{
@@ -25,7 +28,6 @@
             }else if (e.key == "Escape"){
                 searching = false
             }
-
         })
         window.addEventListener("keyup",(e)=>{
 
@@ -37,16 +39,27 @@
             }else if (e.key=="ArrowDown"){
                 highlight_index = Math.min(highlight_index+1,results.length-1)
             }else if (e.key=="Tab"){
-                query = results[highlight_index].rep
+                let tag = results[highlight_index].tags
+                console.log("tabbing");
+                console.log(tag);
+                
+                if (typeof(tag)=="string" ){
+                    tag = tag.split(":")[0]
+                    console.log(tag);
+                    tag = tag.split(".").slice(0,query.split(".").length).join(".")
+                    
+                    query = tag
+                    bar.focus()
+                }
                 e.preventDefault()
-                bar.focus()
             }else if (e.key=="Enter"){
                 results[highlight_index].executor(query)
             }else{
                 if (query == ""){results = []; return}
                 highlight_index = 0
-                let res = search(query)
-                results = res
+                results = search(query)
+                let topres = results[0]
+                console.log(topres.tags);
             }
         })
 
@@ -60,13 +73,13 @@
     let bar: HTMLElement
 
     $:if (searching){
+        setup_search()
         tick().then(()=>{
             bar.focus()
         })
     }
 
     let searchhint = false
-
 
 </script>
 
@@ -80,16 +93,13 @@
 
 <div class=searchbar hidden={!searching}>
 
+    <p id=searchsuggestion>{fillsuggestion}</p>
     <input placeholder="search..." bind:this={bar} type="text" bind:value={query}>
     <div class="results">
         {#each results as res, i}        
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <p class={i==highlight_index ? "highlighted" : ""} on:click={()=>{res.executor(query)}}> {res.rep}</p>
+            <p class={i==highlight_index ? "highlighted" : ""} on:click={()=>{res.executor(query)}}> {(typeof(res.rep) == 'string' ? res.rep : res.rep(query)) }</p>
             <br>
         {/each}
     </div>
 </div>
-
-<style>
-   
-</style>

@@ -186,9 +186,8 @@ div.editable>p>span.typo{
 	background-color: rgba(20, 20, 20, 0.5);
 	z-index: 200;
 	top:0;
-	/* padding-left: 10vw; */
-	padding-left:max(0px,calc(50vw - 50vh));
-	padding-left: max(0px,calc(50vw - 10em));
+
+	padding-left:max(0px,calc(50vw - 10em));
 }
 
 
@@ -198,10 +197,20 @@ div.editable>p>span.typo{
 	padding:.3em;
 	border-radius: .6em;
 	background-color: var(--focus);
+	z-index: 201;
 	border:1em solid var(--dark);
 	box-shadow: 0 0 1em black;
 	color:var(--color);
 	font-size: 1.2em;
+}
+
+#searchsuggestion{
+	color:red;
+	position: absolute;
+	margin-top: calc(12.4vw + 1px);
+	padding-left: calc(1.3em );
+	font-size: 1.2em;
+	z-index: 300;
 }
 
 
@@ -402,7 +411,6 @@ input[type=range]::-webkit-slider-thumb {
 
 
 @media all and (min-width:0px) and (max-width: 520px) {
-/* put your css styles in here */
 
 	html{
 		padding: 0;

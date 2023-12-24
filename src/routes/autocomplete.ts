@@ -2,7 +2,7 @@ import { get_link, get_path_data, type Link, type PathData } from "./link";
 import { setCaret } from "./note";
 import { setup_search } from "./search";
 
-export var title_set = new Set<[string,PathData]>()
+export var title_set = new Map<string,PathData>()
 var title_list:[string,PathData][] =[]
 var title_added = false
 
@@ -17,14 +17,13 @@ export function setup_autocomplete(){
             }
         }catch{}
     }
-    setup_search()
 }
 
 export function add_title_completion(path:PathData){
-    const pathstring = path.location.join(".")+":"+path.author
 
+    const pathstring = path.location.join(".")+":"+path.author
     const size = title_set.size
-    title_set.add([pathstring,path])
+    title_set.set(pathstring,path)
 
     if (size != title_set.size){
         title_added = true

@@ -113,13 +113,13 @@ If you want to learn more, check out: #sciepedia:kormann
 
         }
         
-        let home = new Note ("_home",home_path)
+        let home = new Note("_home",home_path)
 
         title_list.push({element:home.head.title_element,fullpath:home_path})
 
         page.appendChild(home.element)
 
-        document.body.addEventListener("click",e=>{
+        document.body.addEventListener("click", e => {
             if(e.target == document.body){
                 make_editable(null)
             }
