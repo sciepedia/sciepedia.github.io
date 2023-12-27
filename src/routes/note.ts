@@ -5,7 +5,7 @@ import { store, type NoteData, type uuid } from "./data_store"
 
 import { rename_note } from "./renamer"
 import { Autocomplete, add_title_completion } from "./autocomplete"
-import { typo_element } from "./spellchecker"
+import { code_element, typo_element } from "./spellchecker"
 import { username } from "./store"
 
 import { get } from "svelte/store"
@@ -16,6 +16,9 @@ export var root = {path:"_home:"+get(username)}
 export let autocomplete = new Autocomplete()
 
 let hist: PathData[] = []
+
+console.log("inniting Note");
+
 
 export class Note {
 
@@ -39,10 +42,13 @@ export class Note {
             this.body.free()
             this.body.render(newcontent.Content)
             this.data.language = newcontent.language
-            this.body.set_language(newcontent.language)
+            // this.body.set_language(newcontent.language)
         })
 
         this.data = content
+        if (path.location.includes("js")){
+            this.data.language = "js"
+        }
 
         
         this.txt = content.Content
@@ -304,17 +310,22 @@ export class Body {
             }
         })
 
-        this.set_language(this.owner.data.language)
+        // this.set_language(this.owner.data.language)
 
         this.content.addEventListener("input",e=>this.on_input(e))
         this.content.addEventListener("blur",_=> {if(this.editable)make_editable(null)})
         this.content.addEventListener("paste",this.on_paste);
         this.content.addEventListener("copy",this.on_copy)
         this.content.addEventListener("keydown", (e)=>{
-
             if (e.key == "Tab"){
                 e.preventDefault()
             }            
+        })
+        this.content.addEventListener("keydown",e=>{
+            if (e.key == "Tab" && e.target == this.content){
+                const t = document.createTextNode("  ")
+                this.insert_text(t)
+            }
         })
 
         const linkstate = store.get_linkstate(this.owner.data.Path)
@@ -330,25 +341,26 @@ export class Body {
         this.commentSection = new CommentSection(this, this.owner.data.Path)
     }
 
-    set_language(language?:string){        
-        let runbutton = this.element.querySelector(".runbutton")
+    // set_language(language?:string){        
+    //     let runbutton = this.element.querySelector(".runbutton")
         
-        if (language == "txt"){
-            this.content.classList.remove("js")
-            runbutton?.remove()
-        }else if(runbutton == null){
-            this.content.classList.add("js")
-            const runbutton = document.createElement("div")
-            runbutton.innerHTML = "▶"
-            runbutton.classList.add("runbutton")
-            runbutton.addEventListener("click", (e:MouseEvent)=>{
-                runbutton.innerHTML = "O"
-                Function(this.get_content_text())()
-                runbutton.innerHTML = "▶"
-            })
-            this.element.appendChild(runbutton)
-        }
-    }
+    //     if (language == "txt"){
+    //         this.content.classList.remove("js")
+    //         runbutton?.remove()
+    //     }else if(runbutton == null){
+    //         this.content.classList.add("js")
+    //         const runbutton = document.createElement("div")
+    //         runbutton.innerHTML = "▶"
+    //         runbutton.classList.add("runbutton")
+    //         runbutton.addEventListener("click", (e:MouseEvent)=>{
+    //             runbutton.innerHTML = "O"
+    //             execute_script(this)
+    //             // Function(this.get_content_text())()
+    //             runbutton.innerHTML = "▶"
+    //         })
+    //         this.element.appendChild(runbutton)
+    //     }
+    // }
 
     on_paste = (event:ClipboardEvent)=>{
 
@@ -491,12 +503,13 @@ export class Body {
     
         txt = txt.replaceAll(" ", "\xa0")
         txt = txt.replace(/(\S)\u00A0(\S)/g, "$1 $2");
-        let words = txt.split(/(\s+)/);    
+        // let words = txt.split(/(\s+)/);    
+        let words = txt.split(/([\s+[\]{}()])/);
         let p = document.createElement("p")
 
-        let nodes = words.map( w=>{
-            
-            if (is_link(w)){
+        let nodes = words.map( (w,i)=>{
+
+            if (is_link(w) && (!w.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
                 const link = new Link(w,this,compact)
                 return link.element
             }else if(is_http_link(w)){
@@ -510,14 +523,17 @@ export class Body {
                     if (typo != undefined){
                         return typo
                     }
+                }else if (this.owner.data.language == "js"){
+                    const ret = code_element(w)
+                    return ret
                 }
                 return new Text(w)
             }
         })
-        
         nodes.forEach(n=>{
             p.appendChild(n)
         })
+
 
         return p
     }
@@ -598,6 +614,16 @@ export class Body {
             p.firstChild?.replaceWith(p.firstChild?.textContent!)
             const newline = this.reload_line(p)
             put_caret(newline,0)
+            const pc = prev_p.textContent          
+            if (pc){    
+                const wspc = pc?.length - pc.trimStart().length + (["{","[","("].includes(pc.slice(-1)) ? 2 : 0)
+                console.log(wspc);
+                if (wspc){
+                    this.insert_text(document.createTextNode(" ".repeat(wspc)))
+                    put_caret(newline, wspc)
+                }
+
+            }
             return
         }        
         
@@ -611,7 +637,7 @@ export class Body {
                 
                 prev = target.childNodes[offset]
                 offset = 0
-            // }else if (is_link_element(target.parentElement!)){
+
             }else if (target.parentElement?.nodeName == "SPAN"){
                 prev = target.parentElement;
             }
@@ -711,8 +737,6 @@ export class Body {
         this.content.childNodes.forEach(paragraph => {
             if (paragraph.nodeName == "P"){                
                 lines.push(this.get_line_text(paragraph as HTMLParagraphElement))
-            // }else{
-                // console.log(paragraph.nodeName);
             }
         });
         
@@ -802,3 +826,128 @@ export function setCaret(node:Node,offset:number) {
         sel.addRange(range)
     }
 }
+
+
+export type scriptLanguage = "js" 
+
+export class ScriptNote extends Note{
+
+    language:scriptLanguage
+    outfield:HTMLDivElement
+
+    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){
+
+        super(title,path, creator,call_hist)
+        this.language = "js"
+        this.data.language = "js"
+
+        this.body.content.classList.add("js")
+        const runbutton = document.createElement("div")
+        runbutton.innerHTML = "▶"
+        runbutton.classList.add("runbutton")
+        runbutton.addEventListener("mousedown", ()=>{
+            function deepsave(b:Body){
+                if (b.saves_pending) b.save()
+                b.get_links().forEach(l=>{
+                    console.log(l);
+                    
+                    if (l.is_open && l.childnote){
+                        deepsave(l.childnote.body)
+                    }
+                })
+            }
+            deepsave(this.body)
+            runbutton.innerHTML = "O"
+            this.outfield.innerHTML = ""
+
+        })
+        runbutton.addEventListener("click", (e:MouseEvent)=>{
+            this.execute_script(this.body)
+            runbutton.innerHTML = "▶"
+        })
+        this.body.element.appendChild(runbutton)
+        this.outfield = document.createElement("div")
+        this.outfield.classList.add("content")
+        this.outfield.classList.add("js")
+        this.body.element.appendChild(this.outfield)
+    }
+
+
+    get_content_text(body:Body, path:PathData, predefs: Map<string, string>){
+
+        const dat = store.getitem(path, ndat=>console.log("new:", ndat)).Content
+        const lines = dat.split("\n")
+        const txt = lines.map(line=>{
+
+            // const words = line.split(" ")
+            // const words = line.split(/\s| /)
+
+            let words = line.split(/([\s+[\]{}()])/);
+
+
+            return words.map(word=>{
+                
+                if (is_link(word)){
+
+                    const L = new Link(word, body, true)
+                    const pstring = L.path.tostring().replaceAll(".", "$").replaceAll(":", "$").replace("#","")
+
+                    if (!predefs.has(pstring)){
+                        predefs.set(pstring, "#")
+
+                        const nt = new Note(L.name, L.path,L,[])
+                        const link_content = this.get_content_text(nt.body, L.path, predefs)
+                        predefs.set(pstring, link_content)
+                    }
+                    return pstring
+                }
+                return word
+            }).join("")
+        }).join ("\n")
+        return txt
+    }
+
+    async execute_script(body:Body){
+
+        this.outfield.innerHTML = ""
+        const predefs = new Map<string,string> ()
+        let content = this.get_content_text(body, body.owner.data.Path, predefs)
+
+        const pref:string[] = []
+        predefs.forEach((a,b)=>{pref.push(`${b} = ${a}`)})
+
+        content = pref.join("\n") + "\n" + content
+        console.log(content);
+
+        window.print = ((...a:any[])=>{this.print(...a)}) as ()=>void
+
+        (window as any).putout = ((element:any)=>{this.outfield.append(element)})
+        try {
+            const asyncContent = `return async function(){${content}}`
+            console.log(asyncContent);
+            
+            const fn = Function(asyncContent)()
+            console.log(fn);
+            
+            let res = await fn()
+            if (res != undefined) this.print (res)
+        } catch (error) {
+            console.log(error);
+            this.print((error as Error).stack)
+        }
+    }
+
+
+
+    print(...texts:any[]){
+        const p = document.createElement("p")
+        p.innerHTML = texts.map(t=>{
+
+            if (["string", "number", "boolean", "symbol", "undefined"].includes(typeof t) || t == null) return String(t)
+            if (typeof t == "function") return String(t)
+            return JSON.stringify(t)
+        }).join(" ")
+        this.outfield.appendChild(p)
+    }
+}
+

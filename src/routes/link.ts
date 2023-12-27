@@ -6,6 +6,7 @@ import {Note,Body} from "./note"
 import { add_title_completion } from "./autocomplete"
 import { username } from "./store"
 import { get } from "svelte/store"
+import { ScriptNote } from "./note"
 
 export let link_repo = new Map<string,Link>()
 let link_counter = 0
@@ -16,7 +17,7 @@ export class Link {
     path : PathData;
 
     public element : HTMLSpanElement;
-    private childnote : Note | null = null
+    public childnote : Note | null = null
 
     is_open : boolean = false
 
@@ -84,12 +85,16 @@ export class Link {
     }
 
     open(call_hist:string[] = []){
-        this.is_open = true
-
+        
         this.is_open = true
         this.element.classList.add("open")
 
-        this.childnote = new Note(this.name, this.path,this,call_hist)
+        if (this.path.location.slice(-1)[0] == "js"){
+            this.childnote = new ScriptNote(this.name, this.path,this,call_hist)
+        }else{
+            this.childnote = new Note(this.name, this.path,this,call_hist)
+        }
+
 
         const line = this.element.parentElement!
         line.appendChild(this.childnote.element)
