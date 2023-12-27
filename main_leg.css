@@ -135,6 +135,8 @@ div.editable>p>span.typo{
 
 .content.js{
 	font-family: monospace;
+	white-space: pre;
+	--error: transparent;
 }
 
 .runbutton{
@@ -150,6 +152,8 @@ div.editable>p>span.typo{
 	text-shadow: 0 .1em .1em rgba(0, 0, 0, 0.697);
 	box-shadow: 0 .2em 0 rgb(49, 49, 49);
 	font-size: 1.1em;
+	font-family:"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+
 }
 
 
