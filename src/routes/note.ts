@@ -20,6 +20,7 @@ let hist: PathData[] = []
 console.log("inniting Note");
 
 
+
 export class Note {
 
     txt:string
@@ -504,7 +505,7 @@ export class Body {
         txt = txt.replaceAll(" ", "\xa0")
         txt = txt.replace(/(\S)\u00A0(\S)/g, "$1 $2");
         // let words = txt.split(/(\s+)/);    
-        let words = txt.split(/([\s+[\]{}()])/);
+        let words = txt.split(/([\s+[\]{}(),])/);
         let p = document.createElement("p")
 
         let nodes = words.map( (w,i)=>{
@@ -845,7 +846,9 @@ export class ScriptNote extends Note{
         const runbutton = document.createElement("div")
         runbutton.innerHTML = "▶"
         runbutton.classList.add("runbutton")
-        runbutton.addEventListener("mousedown", ()=>{
+
+
+        const preprun = ()=>{
             function deepsave(b:Body){
                 if (b.saves_pending) b.save()
                 b.get_links().forEach(l=>{
@@ -860,10 +863,19 @@ export class ScriptNote extends Note{
             runbutton.innerHTML = "O"
             this.outfield.innerHTML = ""
 
-        })
-        runbutton.addEventListener("click", (e:MouseEvent)=>{
+        }
+        const execute = ()=>{
             this.execute_script(this.body)
             runbutton.innerHTML = "▶"
+        }
+        
+        runbutton.addEventListener("mousedown", preprun)
+        runbutton.addEventListener("click", execute)
+        this.body.content.addEventListener("keydown",  (e:KeyboardEvent)=>{
+            if (e.key == "Enter" && e.ctrlKey){
+                preprun()
+                execute()
+            }
         })
         this.body.element.appendChild(runbutton)
         this.outfield = document.createElement("div")
@@ -873,50 +885,52 @@ export class ScriptNote extends Note{
     }
 
 
-    get_content_text(body:Body, path:PathData, predefs: Map<string, string>){
+    get_content_text(body:Body, path:PathData, predefs: {vars:Set<string>, values: Array<[string,string]>}){
 
         const dat = store.getitem(path, ndat=>console.log("new:", ndat)).Content
         const lines = dat.split("\n")
         const txt = lines.map(line=>{
 
-            // const words = line.split(" ")
-            // const words = line.split(/\s| /)
+            let words = line.split(/([\s+[\]{}(),])/);
 
-            let words = line.split(/([\s+[\]{}()])/);
-
-
-            return words.map(word=>{
+            return words.map((word,i)=>{
                 
-                if (is_link(word)){
+                if (is_link(word) && (!word.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
 
                     const L = new Link(word, body, true)
                     const pstring = L.path.tostring().replaceAll(".", "$").replaceAll(":", "$").replace("#","")
 
-                    if (!predefs.has(pstring)){
-                        predefs.set(pstring, "#")
+                    if (!predefs.vars.has(pstring)){
+                        predefs.vars.add(pstring)
 
                         const nt = new Note(L.name, L.path,L,[])
                         const link_content = this.get_content_text(nt.body, L.path, predefs)
-                        predefs.set(pstring, link_content)
+                        console.log("adding",pstring,link_content);
+                        
+                        // predefs.values = [[pstring, link_content]].concat(...predefs.values) as [string,string][]
+                        predefs.values.push([pstring, link_content])
                     }
                     return pstring
                 }
                 return word
             }).join("")
         }).join ("\n")
+
         return txt
     }
+
 
     async execute_script(body:Body){
 
         this.outfield.innerHTML = ""
-        const predefs = new Map<string,string> ()
+        // const predefs = new Map<string,string> ()
+        const predefs = {vars:new Set<string>,values:new Array<[string,string]>}
         let content = this.get_content_text(body, body.owner.data.Path, predefs)
 
         const pref:string[] = []
-        predefs.forEach((a,b)=>{pref.push(`${b} = ${a}`)})
+        predefs.values.forEach(i=>{pref.push(`${i[0]} = ${i[1]}`)})
 
-        content = pref.join("\n") + "\n" + content
+        content = "\n" +pref.join("\n") + "\n" + content
         console.log(content);
 
         window.print = ((...a:any[])=>{this.print(...a)}) as ()=>void
@@ -937,16 +951,20 @@ export class ScriptNote extends Note{
         }
     }
 
-
-
     print(...texts:any[]){
         const p = document.createElement("p")
-        p.innerHTML = texts.map(t=>{
 
-            if (["string", "number", "boolean", "symbol", "undefined"].includes(typeof t) || t == null) return String(t)
-            if (typeof t == "function") return String(t)
+        function stringify(t:any):string{
+
+            if (["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null) return String(t)
+            if (t instanceof Array){
+                return `[${(t.map(stringify).join(","))}]`
+            }
+
             return JSON.stringify(t)
-        }).join(" ")
+        }
+
+        p.innerHTML = texts.map(stringify).join(" ")
         this.outfield.appendChild(p)
     }
 }

@@ -1,7 +1,9 @@
 
+import { get } from "svelte/store";
 import {getiditem, getitem,setitem} from "./backend"
 import { PathData, get_path_data } from "./link";
 import { is_link } from "./util";
+import { is_online } from "./store";
 
 export type uuid = `${string}-${string}-${string}-${string}-${string}`
 export type language = 'txt' | 'js'

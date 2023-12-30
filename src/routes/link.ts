@@ -133,7 +133,7 @@ export class Link {
                 return
             }
 
-            let compact_name = get_compact_link_name(name)
+            let compact_name = get_compact_link_name(name,!this.parent.owner.data.Path.location.includes("js"))
             this.element.innerHTML = compact_name
         }else{
             this.element.innerHTML = this.name
@@ -150,7 +150,7 @@ export function get_link(id:string){
     return link_repo.get(id)
 }
 
-function get_compact_link_name(path:string){
+function get_compact_link_name(path:string, clearunderscore = true){
 
     let suffix = ""
     let possible_suffixes = [".",":"]
@@ -174,7 +174,7 @@ function get_compact_link_name(path:string){
         }
     })
 
-    name = name.replaceAll("_"," ")
+    if(clearunderscore) name = name.replaceAll("_"," ")
     
     return name + suffix
 }

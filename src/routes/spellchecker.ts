@@ -64,7 +64,7 @@ export function code_element(word:string){
 
     let res : Text | HTMLSpanElement = new Text(word)
     syntaxclasses.forEach(i=>{
-        
+
         if (i.pattern(word)){
             res = document.createElement("span")
             res.innerHTML = word

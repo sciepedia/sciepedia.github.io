@@ -6,7 +6,7 @@
 
     import {tick} from "svelte"
     
-    import { Note, make_editable,title_list } from "./note";
+    import { Note, ScriptNote, make_editable,title_list } from "./note";
     import { setup_autocomplete } from "./autocomplete";
     import { setup_spellcheck } from "./spellchecker";
     import { is_link } from "./util"
@@ -46,7 +46,7 @@ If you want to learn more, check out: #sciepedia:kormann
 
     let page:HTMLDivElement
     import {root} from "./note"
-    import { lightmode, pwdhash, username } from "./store";
+    import { is_online, lightmode, pwdhash, username } from "./store";
     import { PathData, get_path_data } from "./link";
     import Searchbar from "./searchbar.svelte";
     let hist: PathData[]
@@ -113,6 +113,9 @@ If you want to learn more, check out: #sciepedia:kormann
         }
         
         let home = new Note("_home",home_path)
+        if (home_path.location.includes("js")){
+            home = new ScriptNote("_home",home_path)
+        }
 
         title_list.push({element:home.head.title_element,fullpath:home_path})
 
@@ -135,23 +138,23 @@ If you want to learn more, check out: #sciepedia:kormann
         })
     }
 
-function push_note(path:string){
-    const pathdata = get_path_data("_account")
-    hist.push(pathdata)
-    let nt = new Note("_account")
-    page.removeChild(page.firstChild!)
-    page.appendChild(nt.element)
-}
+// function push_note(path:string){
+//     const pathdata = get_path_data("_account")
+//     hist.push(pathdata)
+//     let nt = new Note("_account")
+//     page.removeChild(page.firstChild!)
+//     page.appendChild(nt.element)
+// }
 
-function toggle_lightmode(){
-    $lightmode = ! $lightmode
-}
+// function toggle_lightmode(){
+//     $lightmode = ! $lightmode
+// }
 
 </script>
 
 <Searchbar />
 
-<h2 id=fullheader >{@html fulltitle}</h2>
+<h2 id=fullheader >{@html fulltitle} {$is_online? "" : "offline"}</h2>
 
 
 <!-- <button id = "light_btn" on:click={toggle_lightmode} >❋</button> -->

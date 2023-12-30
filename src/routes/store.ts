@@ -29,4 +29,4 @@ export const lightmode      = createWritable<Boolean> ("lightmode", false)
 export const searchhist     = createWritable<{[key:string]:number}> ("searchhist", {})
 
 export const openaikey      = createWritable<string|null>("openaikey", null)
-
+export const is_online      = createWritable<boolean> ("is_online",true)
