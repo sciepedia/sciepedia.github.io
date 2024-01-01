@@ -161,10 +161,10 @@ function get_compact_link_name(path:string, clearunderscore = true){
         }
     })
 
-    // remove anything before the last dot
-    const words = path.split(".")
+    let loc = path.split(":")[0]
+    const words = loc.split(".")
     let name = words.slice(-1)[0].length > 2 ? words.slice(-1)[0] : words.slice(-2).join(".")
-    //remove anything after the first @ or :
+
     .replace(/[:].*/g,"")
 
     const possible_prefixes = ["#","_"]

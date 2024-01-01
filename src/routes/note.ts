@@ -898,7 +898,11 @@ export class ScriptNote extends Note{
                 if (is_link(word) && (!word.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
 
                     const L = new Link(word, body, true)
-                    const pstring = L.path.tostring().replaceAll(".", "$").replaceAll(":", "$").replace("#","")
+                    console.log(L.path.tostring());
+                    
+                    const pstring = L.path.tostring().replaceAll(".", "$").replaceAll(":", "$$$$").replace("#","")
+                    console.log(pstring);
+                    
 
                     if (!predefs.vars.has(pstring)){
                         predefs.vars.add(pstring)
@@ -941,13 +945,25 @@ export class ScriptNote extends Note{
             console.log(asyncContent);
             
             const fn = Function(asyncContent)()
-            console.log(fn);
-            
             let res = await fn()
             if (res != undefined) this.print (res)
         } catch (error) {
-            console.log(error);
-            this.print((error as Error).stack)
+
+            let stack = (error as Error).stack?.split("\n");
+            this.print("&nbsp;")
+            this.print(stack![0])
+            stack?.slice(1,-3).forEach(l=>{
+                // this.outfield.appendChild(this.body.make_line(l))
+                if (l.startsWith("    at ")){
+                    let loc = l.slice(7).split(" ",2)[0]
+                    let lnum = l.split("<anonymous>:")[1].slice(0,-1)
+                    l =  "    at #" + loc.replace("$$",":").replaceAll("$", ".") + " line " +  lnum
+                    this.outfield.appendChild(this.body.make_line(l))
+                }else{
+                    this.print(l)
+                }
+            })
+
         }
     }
 
