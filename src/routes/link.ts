@@ -20,19 +20,25 @@ export class Link {
     public childnote : Note | null = null
 
     is_open : boolean = false
-
     parent : Body
+    focusline: number | null = null
 
     constructor(name:string, parent:Body, compact:boolean) {
 
-        this.name = name;
         this.element = document.createElement("span");
 
         this.parent = parent
         this.element.classList.add("link")
-        
+                
         this.path = parent.owner.data.Path.create_child(name)
 
+        console.log(this.path);
+        
+        
+        this.name = name;
+        this.name.split(":").slice(1).forEach(p=>{
+            if (!isNaN(Number(p))) this.focusline = Number(p) - 1
+        })
         
         this.element.innerHTML = name
 
@@ -45,7 +51,6 @@ export class Link {
             }else{
                 this.open()
             }
-
             this.parent.save_linkstate()
         }
 
@@ -95,9 +100,14 @@ export class Link {
             this.childnote = new Note(this.name, this.path,this,call_hist)
         }
 
-
         const line = this.element.parentElement!
         line.appendChild(this.childnote.element)
+
+        if (this.focusline != null){
+            const line = this.childnote.body.element.childNodes[0].childNodes[this.focusline] as HTMLParagraphElement
+            line.style.backgroundColor = "var(--brown)"
+        }
+        
         title_list.push({element:this.childnote.head.title_element,fullpath:this.path})
         
         this.set_expanded(true)
@@ -143,7 +153,6 @@ export class Link {
 
 export function remove_link_id(id:string){
     link_repo.delete(id)
-
 }
 
 export function get_link(id:string){
@@ -163,7 +172,7 @@ function get_compact_link_name(path:string, clearunderscore = true){
 
     let loc = path.split(":")[0]
     const words = loc.split(".")
-    let name = words.slice(-1)[0].length > 2 ? words.slice(-1)[0] : words.slice(-2).join(".")
+    let name = islanguageending(words.slice(-1)[0]) ? words.slice(-2).join(".") : words.slice(-1)[0]
 
     .replace(/[:].*/g,"")
 
@@ -178,6 +187,8 @@ function get_compact_link_name(path:string, clearunderscore = true){
     
     return name + suffix
 }
+
+function islanguageending(s:string){return s.length < 3 || ["csv"].includes(s)}
 
 export function is_link_element(element:Node){
     return element instanceof HTMLSpanElement && element.classList.contains("link")
@@ -214,7 +225,6 @@ export class PathData{
     }
 
     parent(){
-
         return this.location.length>1? new PathData(this.pub, this.author,this.location.slice(0,-1)):null
     }
 
@@ -227,26 +237,23 @@ export class PathData{
         }
         
         if (title.startsWith("#") || title.startsWith("_")){
-            if (title.includes(":")){
-                return get_path_data(title)
-            }
-            return get_path_data(title + ":" + this.author)
+            return get_path_data(title.split(":")[0], this.author)
         }
         if (title.startsWith("..")){
             const parent = this.parent()
-            if (parent == null){
-                throw "no parent here for ..path"
-            }
-            return get_path_data ( parent.tostring()+ title.substring(1))
+            if (parent == null)throw "no parent here for ..path"
+
+            return get_path_data ( parent.tostring()+ title.substring(1), this.author)
         }
+
         if (title.startsWith(".")){
-            return get_path_data(this.tostring() + title)
+            const ret = get_path_data(this.tostring() + title, this.author)
+            return ret
         }
         throw "invalid path: "+title
     }
 
     pretty(){
-
         const res = this.location.join(".")+`<span class='author'> by ${this.author}</span>`
         return res
         
@@ -267,12 +274,11 @@ export function get_path_data(path:string, default_author?:string):PathData{
 
     const location = path.split(".").map(s=>{
         const su = s.split(":")
-        if (su.length>1){
-            author = su[1]
+        for (let p of su.slice(1)){
+            if (isNaN(Number(p))) author=p
         }
         return su[0]
-    })
-
+    })    
     return new PathData(pub,author,location)
 }
 

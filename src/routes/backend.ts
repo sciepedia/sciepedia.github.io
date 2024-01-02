@@ -61,7 +61,7 @@ export async function getitem(key :PathData):Promise<NoteData|null>{
             Path:new PathData(d.is_public,d.user_id,d.title.split(".")),
             Content:d.content,
             comment_of: d.comment_of ?? undefined,
-        }
+        }        
         return res
     }
     return null

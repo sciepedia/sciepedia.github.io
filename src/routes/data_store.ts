@@ -6,14 +6,13 @@ import { is_link } from "./util";
 import { is_online } from "./store";
 
 export type uuid = `${string}-${string}-${string}-${string}-${string}`
-export type language = 'txt' | 'js'
+export type language = 'txt' | 'js' | 'csv'
 export type NoteData = {Path:PathData, Content:string, language?:language, comments?:uuid[], id:uuid, comment_of?:uuid}
 
 export let store = {
 
     getitem : (Path:PathData,callback:(s:NoteData)=>void)=>{
-        
-        
+
         var res:NoteData = {Path, Content:"…",language:Path.location.slice(-1)[0]=='js'?"js":"txt",id:crypto.randomUUID()}
         const key = JSON.stringify(Path)
 
@@ -25,17 +24,51 @@ export let store = {
                 console.warn("error parsing json",localStorage[key])
                 res = {Path, Content:"<Error>",id:"----"};
             }
-
         }
 
         getitem(Path).then(content=> {
             if (content!=null && (content.Content != res.Content || content!.id != res.id)){
                 res = {...res, Content:content!.Content, id:content!.id}
-                localStorage[key] = JSON.stringify(res)     
-                // res.language = Path.location.slice(-1)[0]=='js'?"js":"txt"           
+                localStorage[key] = JSON.stringify(res)
                 callback(res)
             }
         })
+
+        if (res != null){
+            res.Path = new PathData(res.Path.pub,res.Path.author,res.Path.location)
+        }
+        res.language = Path.location.slice(-1)[0]=='js'?"js":"txt"
+
+        return res
+    },
+
+    getitemblocking : async (Path:PathData)=>{
+        var res:NoteData | null = {Path, Content:"…",language:Path.location.slice(-1)[0]=='js'?"js":"txt",id:crypto.randomUUID()}
+        const key = JSON.stringify(Path)
+
+        if (store.has(Path)){
+            try{
+                res = JSON.parse(localStorage[key]) as NoteData
+            }catch{
+                console.warn("error parsing json",localStorage[key])
+                res = {Path, Content:"<Error>",id:"----"};
+            }
+        }else{
+
+            let content = await getitem(Path)//.then(content=> {
+                // if (content!=null && (content.Content != res.Content || content!.id != res.id)){
+                //     res = {...res, Content:content!.Content, id:content!.id}
+                //     localStorage[key] = JSON.stringify(res)
+                //     callback(res)
+                // }
+            // })
+            if (content !=null){
+                res = {...res, Content:content!.Content, id:content!.id}
+                localStorage[key] = JSON.stringify(res)
+            }else{
+                console.error("got no result for", Path.tostring())
+            }
+        }
 
         if (res != null){
             res.Path = new PathData(res.Path.pub,res.Path.author,res.Path.location)

@@ -66,7 +66,7 @@ body.light{
 }
 
 
-/* input:focus, .content:focus, p:focus{ */
+
 .title:focus, .content:focus{
 	outline: none;
 	background-color: var(--focus);
@@ -106,6 +106,7 @@ div.editable>p>span.typo{
 	text-decoration-color: var(--error);
 }
 
+
 .note{
 	background-color: var(--dark);
 
@@ -133,11 +134,43 @@ div.editable>p>span.typo{
 
 }
 
+.tablecontainer>table{
+	border-collapse: collapse;
+	padding:.1em;
+	height:1em;
+}
+
+.tablecontainer>table>tr>td{
+
+	border: 1px solid var(--brown);
+	padding: .2em .5em;
+	height: 1em;
+}
+
 .content.js{
 	font-family: monospace;
 	white-space: pre;
 	--error: transparent;
 }
+.supercontainer{
+	display: inline-grid;
+}
+.tablecontainer{
+	display: flex;
+}
+.newrow{
+	width:calc(100% - 1.5em);
+	/* border-radius: 0 0 1em 1em; */
+}
+
+.newrow, .newcolumn{
+	background-color: var(--focus);
+	/* border: 1px solid var(--brown); */
+	border: unset;
+	color: var(--brown)
+}
+
+
 
 .runbutton{
 	color:rgb(8, 165, 8);

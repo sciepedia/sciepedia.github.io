@@ -17,8 +17,6 @@ export let autocomplete = new Autocomplete()
 
 let hist: PathData[] = []
 
-console.log("inniting Note");
-
 
 
 export class Note {
@@ -31,24 +29,27 @@ export class Note {
     body : Body
     data : NoteData
 
-    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){        
+    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = [], BodyType = Body){        
+
+        console.log("new note", path);
+        
 
         if (path==undefined){
             path = get_path_data(title)
         }
 
         let content = store.getitem(path, newcontent =>{
-            console.log(newcontent);
-            
             this.body.free()
             this.body.render(newcontent.Content)
             this.data.language = newcontent.language
-            // this.body.set_language(newcontent.language)
         })
 
         this.data = content
         if (path.location.includes("js")){
             this.data.language = "js"
+        }else if(path.location[path.location.length-1] == "csv"){
+            this.data.language = "csv"
+            BodyType = TableBody
         }
 
         
@@ -61,7 +62,7 @@ export class Note {
         this.element.classList.add("note")
         this.head = new Head(title,get(username),this,creator)
 
-        this.body = new Body(this.txt,this,content,call_hist)
+        this.body = new BodyType(this.txt,this,content,call_hist)
 
         this.element.appendChild(this.head.element)
         this.element.appendChild(this.body.element)
@@ -144,10 +145,9 @@ export class Head {
         if (title.startsWith("#") || title.startsWith("_")){
             title = title.substring(1)
         }
-
         const loc = this.note.data.Path.location
 
-        let parts
+        let parts:string[]
         if (title.startsWith("..")){
             parts = title.split(".").slice(2)
         }else if (title.startsWith(".")){
@@ -155,6 +155,8 @@ export class Head {
         }else{   
             parts = loc
         }
+        parts = parts.map(p => p.split(":")[0])
+
         const ht = parts.join(".").replaceAll("_"," ") + (`<span class='author'> by ${this.note.data.Path.author} </span>`)
         this.title_element.innerHTML = ht
     }
@@ -269,7 +271,7 @@ export class Body {
     saves_pending:boolean = false
     comments:uuid[]
 
-    constructor(txt:string,owner:Note|CommentElement,content:NoteData | NoteData,call_hist:string[] = []){
+    constructor(txt:string,owner:Note|CommentElement,content:NoteData,call_hist:string[] = []){
 
         this.comments = content.comments?? []
 
@@ -286,7 +288,6 @@ export class Body {
         this.element.appendChild(this.content)
 
         this.owner = owner
-
         owner.body = this
 
         this.can_write = this.owner.data.Path.author == get(username)
@@ -297,21 +298,13 @@ export class Body {
             this.content.appendChild(p)
         }else{
             let lines = txt.split("\n")
-
             lines.forEach(l=>{
                 let p = this.make_line(l)
                 this.content.appendChild(p)
             })
         }
 
-        this.content.addEventListener("click",e=>{
-            if ((e.target as HTMLElement).parentElement == this.content || (e.target as HTMLElement) == this.content){
-                make_editable(this)
-                autocomplete.clear()
-            }
-        })
-
-        // this.set_language(this.owner.data.language)
+        this.content.addEventListener("click",this.on_click)
 
         this.content.addEventListener("input",e=>this.on_input(e))
         this.content.addEventListener("blur",_=> {if(this.editable)make_editable(null)})
@@ -342,26 +335,12 @@ export class Body {
         this.commentSection = new CommentSection(this, this.owner.data.Path)
     }
 
-    // set_language(language?:string){        
-    //     let runbutton = this.element.querySelector(".runbutton")
-        
-    //     if (language == "txt"){
-    //         this.content.classList.remove("js")
-    //         runbutton?.remove()
-    //     }else if(runbutton == null){
-    //         this.content.classList.add("js")
-    //         const runbutton = document.createElement("div")
-    //         runbutton.innerHTML = "▶"
-    //         runbutton.classList.add("runbutton")
-    //         runbutton.addEventListener("click", (e:MouseEvent)=>{
-    //             runbutton.innerHTML = "O"
-    //             execute_script(this)
-    //             // Function(this.get_content_text())()
-    //             runbutton.innerHTML = "▶"
-    //         })
-    //         this.element.appendChild(runbutton)
-    //     }
-    // }
+    on_click = (e:MouseEvent)=>{
+        if ((e.target as HTMLElement).parentElement == this.content || (e.target as HTMLElement) == this.content){
+            make_editable(this)
+            autocomplete.clear()
+        }
+    }
 
     on_paste = (event:ClipboardEvent)=>{
 
@@ -397,7 +376,6 @@ export class Body {
         if (paste.startsWith(window.location.origin) && paste.includes("?")){
 
             console.log("pasting link");
-            
             event.preventDefault();
             
             let dest = paste.split("?")[1]
@@ -494,7 +472,7 @@ export class Body {
         return links
     }
 
-    make_line(txt:string,compact:boolean=true){
+    make_line(txt:string,compact:boolean=true): HTMLElement{
 
         if (txt == ""){
             let p = document.createElement("p")
@@ -559,6 +537,7 @@ export class Body {
     }
 
     async on_input(e:Event){
+
         if(this.content.contentEditable != "true"){return}
         if (e.target != this.content){return}
 
@@ -618,7 +597,6 @@ export class Body {
             const pc = prev_p.textContent          
             if (pc){    
                 const wspc = pc?.length - pc.trimStart().length + (["{","[","("].includes(pc.slice(-1)) ? 2 : 0)
-                console.log(wspc);
                 if (wspc){
                     this.insert_text(document.createTextNode(" ".repeat(wspc)))
                     put_caret(newline, wspc)
@@ -708,7 +686,7 @@ export class Body {
         })
     }
 
-    save(){
+    save(){        
         this.owner.save()
         this.saves_pending = false
     }
@@ -720,8 +698,7 @@ export class Body {
         store.set_linkstate(this.owner.data.Path,linkstate)
     }
 
-    save_lazy(){
-        
+    save_lazy(){        
         if (this.saves_pending){
             return
         }
@@ -780,7 +757,7 @@ export class Body {
     }
 }
 
-function put_caret(line:HTMLParagraphElement, offset:number):Node|null{
+function put_caret(line:HTMLElement, offset:number):Node|null{
 
     
     let next = line.firstChild
@@ -852,8 +829,6 @@ export class ScriptNote extends Note{
             function deepsave(b:Body){
                 if (b.saves_pending) b.save()
                 b.get_links().forEach(l=>{
-                    console.log(l);
-                    
                     if (l.is_open && l.childnote){
                         deepsave(l.childnote.body)
                     }
@@ -885,54 +860,59 @@ export class ScriptNote extends Note{
     }
 
 
-    get_content_text(body:Body, path:PathData, predefs: {vars:Set<string>, values: Array<[string,string]>}){
+    async get_content_text(body:Body, path:PathData, predefs: {vars:Set<string>, values: Array<[string,string]>}){
+        const dat = (await store.getitemblocking(path)).Content
 
-        const dat = store.getitem(path, ndat=>console.log("new:", ndat)).Content
+        console.log("dat:",dat);        
+        
         const lines = dat.split("\n")
-        const txt = lines.map(line=>{
+        let lns = (await Promise.all(lines.map(async line=>{
 
             let words = line.split(/([\s+[\]{}(),])/);
 
-            return words.map((word,i)=>{
+            return (await Promise.all(words.map(async (word,i)=>{
                 
                 if (is_link(word) && (!word.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
 
                     const L = new Link(word, body, true)
-                    console.log(L.path.tostring());
-                    
                     const pstring = L.path.tostring().replaceAll(".", "$").replaceAll(":", "$$$$").replace("#","")
-                    console.log(pstring);
-                    
 
                     if (!predefs.vars.has(pstring)){
                         predefs.vars.add(pstring)
 
                         const nt = new Note(L.name, L.path,L,[])
-                        const link_content = this.get_content_text(nt.body, L.path, predefs)
-                        console.log("adding",pstring,link_content);
-                        
-                        // predefs.values = [[pstring, link_content]].concat(...predefs.values) as [string,string][]
+                        const link_content = await this.get_content_text(nt.body, L.path, predefs)                        
+
                         predefs.values.push([pstring, link_content])
                     }
                     return pstring
                 }
                 return word
-            }).join("")
-        }).join ("\n")
+            }))).join("")
+        })))
+        console.log(lns);
+        
+        let txt = lns.join("\n")
 
         return txt
     }
-
 
     async execute_script(body:Body){
 
         this.outfield.innerHTML = ""
         // const predefs = new Map<string,string> ()
         const predefs = {vars:new Set<string>,values:new Array<[string,string]>}
-        let content = this.get_content_text(body, body.owner.data.Path, predefs)
+        let content = await this.get_content_text(body, body.owner.data.Path, predefs)
 
         const pref:string[] = []
-        predefs.values.forEach(i=>{pref.push(`${i[0]} = ${i[1]}`)})
+        let linecount = 0
+        let functdict:Map<string,number>  = new Map()
+        predefs.values.forEach(i=>{
+            const newlines = i[1].match(/\n/g)?.length ?? 0
+            pref.push(`${i[0]} = ${i[1]}`)
+            functdict.set(i[0], linecount)
+            linecount += newlines + 1
+        })
 
         content = "\n" +pref.join("\n") + "\n" + content
         console.log(content);
@@ -943,27 +923,38 @@ export class ScriptNote extends Note{
         try {
             const asyncContent = `return async function(){${content}}`
             console.log(asyncContent);
-            
+
             const fn = Function(asyncContent)()
             let res = await fn()
             if (res != undefined) this.print (res)
         } catch (error) {
 
+    
             let stack = (error as Error).stack?.split("\n");
+            console.log(stack?.join("\n"));
+            
             this.print("&nbsp;")
             this.print(stack![0])
-            stack?.slice(1,-3).forEach(l=>{
+            stack?.slice(1,-2).forEach(l=>{
                 // this.outfield.appendChild(this.body.make_line(l))
                 if (l.startsWith("    at ")){
                     let loc = l.slice(7).split(" ",2)[0]
                     let lnum = l.split("<anonymous>:")[1].slice(0,-1)
-                    l =  "    at #" + loc.replace("$$",":").replaceAll("$", ".") + " line " +  lnum
+                    let linenum = Number(lnum.split(":")[0]) - 3 - functdict.get(loc)!
+                    l =  "at #" + loc.replace("$$",":").replaceAll("$", ".") + ":" +  linenum
                     this.outfield.appendChild(this.body.make_line(l))
                 }else{
                     this.print(l)
                 }
             })
-
+            if (stack){
+                let l = stack[stack?.length-2]
+                console.log(linecount);
+                
+                let lnum = Number(l.split("<anonymous>:")[1].slice(0,-1).split(":")[0])-linecount - 3
+                console.log(lnum)
+                this.outfield.appendChild(this.body.make_line("at "+ this.data.Path.tostring() + ":" +lnum))
+            }
         }
     }
 
@@ -985,3 +976,114 @@ export class ScriptNote extends Note{
     }
 }
 
+
+class TableBody extends Body{
+
+    table:HTMLTableElement
+    rows:number
+    columns:number
+    constructor(txt:string,owner:Note|CommentElement,content:NoteData,call_hist:string[] = []){
+        super(txt,owner,content,call_hist)
+
+        const nodes = this.content.childNodes
+
+        let container = document.createElement("div")
+        let precontainer = document.createElement("div")
+        container.classList.add("tablecontainer")
+        precontainer.classList.add("supercontainer")
+
+        
+        this.table = document.createElement("table")
+        this.table.classList.add("tablecontent")
+        this.table.append(...nodes)
+        this.rows = this.table.childNodes.length
+        console.log(this.rows);
+        
+        this.columns = this.table.childNodes[0].childNodes.length
+        this.content.innerHTML = ""
+
+
+        this.content.append(precontainer)
+        precontainer.append(container)
+
+        container.append(this.table)
+
+        const newcolumn = document.createElement("button")
+        newcolumn.addEventListener("click", e=>{
+            this.table.childNodes.forEach(tr=>{
+                tr.appendChild(document.createElement("td"))
+            })
+            this.columns ++
+        })
+        newcolumn.classList.add("newcolumn")
+        newcolumn.innerHTML = "+"
+        container.appendChild(newcolumn)
+
+
+        const newrow = document.createElement("button")
+
+        newrow.addEventListener("click", e=>{
+            let row = document.createElement("tr")
+            for (let i=0;i < this.columns;i++){
+                row.append(document.createElement("td"))
+            }
+            this.rows++
+            this.table.append(row)
+        })
+
+        newrow.innerHTML = "+"
+        newrow.classList.add("newrow")
+
+        precontainer.append(newrow)
+
+
+        this.can_write = false
+
+        this.content.addEventListener("click",(e)=>{
+            console.log((e.target as HTMLElement).nodeName);
+            if ((e.target as HTMLElement).nodeName == "TD"){
+                let target = e.target as HTMLTableCellElement
+                target.contentEditable = "true"
+                target.focus()
+            }
+        })
+
+    }
+
+    make_line(txt: string, compact?: boolean): HTMLElement {
+        
+        const tr = document.createElement("tr")
+        for (let cell of txt.split(",")){
+            let td = document.createElement("td")
+            td.innerHTML = cell
+            tr.append(td)
+        }
+        return tr
+    }
+
+    get_content_text(){
+
+        this.table.querySelectorAll("button").forEach(b=>{
+            b.remove()
+        })
+
+        const table = this.content.querySelector("table")
+        let res = ""
+
+        for (let tr of table!.childNodes){
+            for (let td of tr.childNodes){
+                let i = (td as HTMLTableElement).innerHTML
+                // if (i){
+                    res += i + ","
+                // }
+            }
+            res = res.slice(0,-1) + "\n"
+        }
+        res = res.slice(0,-1)
+        return res
+    }
+
+    async on_input(e: Event) {
+        this.save_lazy()
+    }
+}
