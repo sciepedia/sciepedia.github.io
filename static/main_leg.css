@@ -131,7 +131,6 @@ div.editable>p>span.typo{
 	padding-right:1em;
 	margin:0;
 	/* border-bottom: 2px solid var(--focus2); */
-
 }
 
 .tablecontainer>table{
@@ -141,10 +140,14 @@ div.editable>p>span.typo{
 }
 
 .tablecontainer>table>tr>td{
-
 	border: 1px solid var(--brown);
 	padding: .2em .5em;
 	height: 1em;
+	outline: none;
+	white-space: nowrap;
+}
+.tablecontainer>table>tr>td:focus{
+	background-color: var(--focus);
 }
 
 .content.js{
@@ -158,16 +161,35 @@ div.editable>p>span.typo{
 .tablecontainer{
 	display: flex;
 }
-.newrow{
-	width:calc(100% - 1.5em);
-	/* border-radius: 0 0 1em 1em; */
+
+.newrow, .newcolumn, .removerow, .removecolumn{
+	/* background-color: var(--focus); */
+	background-color: transparent;
+
+	border: unset;
+	/* color: var(--brown); */
+	color:transparent;
+	width:1.5em;
+	min-height:2em;
 }
 
-.newrow, .newcolumn{
-	background-color: var(--focus);
-	/* border: 1px solid var(--brown); */
-	border: unset;
-	color: var(--brown)
+.newcolumn{
+	height:calc(100% - 1.9em);
+	margin-top: 1.9em;
+}
+.newrow{
+	margin: 0 1.5em;
+	width:calc(100% - 3em);
+}
+
+.removecolumn{
+	color:transparent;
+	text-align: center;
+}
+
+.newrow:hover, .newcolumn:hover, .removerow:hover, .removecolumn:hover{
+	color:var(--color);
+	background-color: var(--brown);
 }
 
 

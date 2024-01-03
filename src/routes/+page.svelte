@@ -108,7 +108,7 @@ If you want to learn more, check out: #sciepedia:kormann
 
         let home_path = get_path_data(root.path)
         if(!store.has(home_path)){
-            const data = ({Path:home_path,Content:"welcome to sciepedia\ntry out the tutorial: _tutorial",id:crypto.randomUUID()})
+            const data = ({Path:home_path,Content:"welcome to #sciepedia:kormann\nif you're new try out the tutorial: _tutorial",id:crypto.randomUUID()})
             localStorage[JSON.stringify(data.Path)] = JSON.stringify(data)
         }
         

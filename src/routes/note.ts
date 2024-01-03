@@ -457,9 +457,12 @@ export class Body {
 
     }
 
-    get_links():Link[]{
+    get_links(parent?:HTMLElement):Link[]{
+        if (parent == undefined){
+            parent = this.content
+        }
         let links:Link[] = []
-        this.content.childNodes.forEach(p=>{
+        parent.childNodes.forEach(p=>{
             p.childNodes.forEach(n=>{
                 if (is_link_element(n)){
                     const link = get_link((n as HTMLSpanElement).id)
@@ -601,7 +604,6 @@ export class Body {
                     this.insert_text(document.createTextNode(" ".repeat(wspc)))
                     put_caret(newline, wspc)
                 }
-
             }
             return
         }        
@@ -725,6 +727,9 @@ export class Body {
     get_line_text(line:HTMLParagraphElement):string{
         let txt = ""
 
+        console.log("getline text", line);
+        
+
         const autocomplete_was_active = autocomplete.open
         if (autocomplete_was_active){
             autocomplete.clear()
@@ -753,6 +758,8 @@ export class Body {
         if (autocomplete_was_active){
             autocomplete.restore()
         }
+        console.log(txt);
+        
         return txt
     }
 }
@@ -1002,16 +1009,31 @@ class TableBody extends Body{
         this.columns = this.table.childNodes[0].childNodes.length
         this.content.innerHTML = ""
 
-
         this.content.append(precontainer)
-        precontainer.append(container)
 
+
+        const removecolumns = document.createElement("tr")
+        for (var i =0;i<this.columns;i++){
+            if (i==0)removecolumns.append(document.createElement("span"))
+            else removecolumns.append(this.removecolumn(this.table,i))
+        }
+
+        this.table.prepend(removecolumns)
+        precontainer.append(container)
         container.append(this.table)
 
         const newcolumn = document.createElement("button")
         newcolumn.addEventListener("click", e=>{
-            this.table.childNodes.forEach(tr=>{
-                tr.appendChild(document.createElement("td"))
+            this.table.childNodes.forEach((tr,i)=>{
+                let newtd
+                if (i==0) {
+                    newtd = this.removecolumn(this.table, this.columns)
+                }else{
+                    newtd = document.createElement("td")
+                    newtd.append(super.make_line(""))
+                    console.log(newtd);
+                }
+                tr.appendChild(newtd)
             })
             this.columns ++
         })
@@ -1019,67 +1041,99 @@ class TableBody extends Body{
         newcolumn.innerHTML = "+"
         container.appendChild(newcolumn)
 
-
         const newrow = document.createElement("button")
-
         newrow.addEventListener("click", e=>{
-            let row = document.createElement("tr")
-            for (let i=0;i < this.columns;i++){
-                row.append(document.createElement("td"))
-            }
-            this.rows++
-            this.table.append(row)
+            let row = this.table.insertRow(-1)
+            row.replaceWith(this.make_line(",".repeat(this.columns-2)))
         })
-
         newrow.innerHTML = "+"
         newrow.classList.add("newrow")
-
         precontainer.append(newrow)
-
 
         this.can_write = false
 
         this.content.addEventListener("click",(e)=>{
-            console.log((e.target as HTMLElement).nodeName);
-            if ((e.target as HTMLElement).nodeName == "TD"){
-                let target = e.target as HTMLTableCellElement
+            let target = e.target as HTMLElement
+            if (target.nodeName == "BUTTON") return
+            if (target.nodeName == "TD" || target.parentNode?.nodeName == "TD"){
+                let target = ((e.target as HTMLElement).nodeName == "TD" ? e.target : (e.target as HTMLElement).parentNode) as HTMLTableCellElement
                 target.contentEditable = "true"
-                target.focus()
+                let p = target.querySelector("p")!
+                if ([p,p.parentElement].includes(document.activeElement as HTMLElement)) return
+                p.focus()
+                this.get_links(p.parentElement!).forEach(l=>{
+                    l.set_expanded(true)
+                })
+                put_caret(p,this.get_line_text(p).length)
             }
         })
 
+        this.content.addEventListener("input",(e)=>{
+            if ((e.target as HTMLElement).nodeName == "TD" || (e.target as HTMLElement).parentNode?.nodeName == "TD"){
+                this.on_input(e)
+            }
+        })
+    }
+
+    removecolumn(table:HTMLTableElement, columnindex:number):  Node {
+        let td = document.createElement("td")
+        let but = document.createElement("button")
+        but.innerHTML = "-"
+        but.style.all = 'unset'
+
+        but.addEventListener("click",e=>{
+            console.log('remove col',columnindex);
+            table.childNodes.forEach((e,i)=>e.childNodes[columnindex].remove())
+        })
+        this.save_lazy()
+        but.style.width = "100%"
+        td.style.padding = "0";
+        td.append(but)
+        td.classList.add('removecolumn')
+        td.style.border = "unset"
+        return td
     }
 
     make_line(txt: string, compact?: boolean): HTMLElement {
-        
+
         const tr = document.createElement("tr")
+        let remove = tr.append(this.removerow(tr))
         for (let cell of txt.split(",")){
             let td = document.createElement("td")
-            td.innerHTML = cell
+            td.append(super.make_line(cell))
             tr.append(td)
         }
         return tr
     }
 
-    get_content_text(){
+    removerow(tr:HTMLTableRowElement){
+        let remove = document.createElement("button")
+        remove.innerHTML="-"
+        remove.addEventListener("click",()=>tr.remove())
+        remove.classList.add("removerow")
+        return remove
+    }
 
-        this.table.querySelectorAll("button").forEach(b=>{
-            b.remove()
-        })
+    get_content_text(){
 
         const table = this.content.querySelector("table")
         let res = ""
 
-        for (let tr of table!.childNodes){
-            for (let td of tr.childNodes){
-                let i = (td as HTMLTableElement).innerHTML
-                // if (i){
-                    res += i + ","
-                // }
+        for (let k = 1; k < table!.childNodes!.length; k++) {
+            const tr = table?.childNodes![k] as HTMLTableRowElement;
+            for (let i =1; i < tr.childNodes.length; i++) {
+                const td = tr.childNodes[i];
+
+                console.log(td);
+                
+
+                let t = this.get_line_text((td as HTMLTableCellElement).querySelector("p") as HTMLParagraphElement)
+                res += t + ","
             }
             res = res.slice(0,-1) + "\n"
         }
         res = res.slice(0,-1)
+        console.log(res);
         return res
     }
 
