@@ -138,32 +138,16 @@ If you want to learn more, check out: #sciepedia:kormann
         })
     }
 
-// function push_note(path:string){
-//     const pathdata = get_path_data("_account")
-//     hist.push(pathdata)
-//     let nt = new Note("_account")
-//     page.removeChild(page.firstChild!)
-//     page.appendChild(nt.element)
-// }
-
-// function toggle_lightmode(){
-//     $lightmode = ! $lightmode
-// }
 
 </script>
 
 <Searchbar />
 
+
+
 <h2 id=fullheader >{@html fulltitle} {$is_online? "" : "offline"}</h2>
 
 
-<!-- <button id = "light_btn" on:click={toggle_lightmode} >❋</button> -->
-<!-- 
-<button id = "loggedin_btn" on:click={()=>{
-
-    window.location.pathname='login'
-
-}}> {logged_in_prefix}</button> -->
 
 <div id =page>
 

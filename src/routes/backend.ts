@@ -118,9 +118,12 @@ export async function setitem (n:NoteData){
         is_public:n.Path.pub,
         id:n.id,
         comment_of: n.comment_of?? null,
-    }    
+    }
 
-    await supabase.from("notes").upsert(arg)
+    let {error} = await supabase.from("notes").upsert(arg)
+    if (error){
+        throw error
+    }
 }
 
 export async function get_user_name(userId:string){

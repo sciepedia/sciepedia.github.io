@@ -55,13 +55,7 @@ export let store = {
             }
         }else{
 
-            let content = await getitem(Path)//.then(content=> {
-                // if (content!=null && (content.Content != res.Content || content!.id != res.id)){
-                //     res = {...res, Content:content!.Content, id:content!.id}
-                //     localStorage[key] = JSON.stringify(res)
-                //     callback(res)
-                // }
-            // })
+            let content = await getitem(Path)
             if (content !=null){
                 res = {...res, Content:content!.Content, id:content!.id}
                 localStorage[key] = JSON.stringify(res)
@@ -100,8 +94,12 @@ export let store = {
 
         localStorage[key] = data
 
-        if (n.Path.author != "me"){            
-            setitem(n)
+        if (n.Path.author != "me"){
+            try{
+                setitem(n)
+            }catch (e){
+                throw e
+            }      
         }
     },
     

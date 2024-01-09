@@ -8,6 +8,9 @@ import { Autocomplete, add_title_completion } from "./autocomplete"
 import { code_element, typo_element } from "./spellchecker"
 import { username } from "./store"
 
+
+import * as eslint from "eslint-linter-browserify";
+
 import { get } from "svelte/store"
 import { CommentSection, type CommentElement } from "./comments"
 
@@ -15,8 +18,17 @@ export var title_list:{element:HTMLElement,fullpath:PathData}[] = []
 export var root = {path:"_home:"+get(username)}
 export let autocomplete = new Autocomplete()
 
+
+
 let hist: PathData[] = []
 
+
+const linter = new eslint.Linter()
+const lint = (txt:string) => linter.verify(txt,{
+    parserOptions:{
+        "ecmaVersion": 6,
+    }
+})
 
 
 export class Note {
@@ -30,9 +42,6 @@ export class Note {
     data : NoteData
 
     constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = [], BodyType = Body){        
-
-        console.log("new note", path);
-        
 
         if (path==undefined){
             path = get_path_data(title)
@@ -102,7 +111,12 @@ export class Head {
             this.title_element.addEventListener("click",(_)=>{
 
                 rename_note(this.note.data.Path).then((newpath)=>{
+                    let data = store.getitem(newpath,newdata=>{
+                        this.note.data.id = newdata.id
+                        this.note.body.save_lazy()
+                    })
                     this.note.data.Path = newpath
+                    this.note.data.id = data.id
                     const new_title = creator.rename(newpath)
                     
                     this.set_title(title)
@@ -485,37 +499,42 @@ export class Body {
     
         txt = txt.replaceAll(" ", "\xa0")
         txt = txt.replace(/(\S)\u00A0(\S)/g, "$1 $2");
-        // let words = txt.split(/(\s+)/);    
+
         let words = txt.split(/([\s+[\]{}(),])/);
         let p = document.createElement("p")
+        let nodes:Node[] = []
 
-        let nodes = words.map( (w,i)=>{
-
+        for (let i in words){
+            let w = words[i]
             if (is_link(w) && (!w.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
                 const link = new Link(w,this,compact)
-                return link.element
+                nodes.push(link.element)
             }else if(is_http_link(w)){
-                return make_http_link(w)
+                nodes.push(make_http_link(w))
             }else if(w.startsWith("##image:")){
-                const img = new Image(w.slice(8))
-                return img.element
+                const img = new Image(txt.slice(8))
+                nodes.push(img.element)
+                break
             }else{
                 if (this.owner.data.language == "txt"){
                     const typo = typo_element(w)
                     if (typo != undefined){
-                        return typo
+                        nodes.push(typo)
+                        continue
+                    }else{
+                        nodes.push(new Text(w))
                     }
                 }else if (this.owner.data.language == "js"){
                     const ret = code_element(w)
-                    return ret
+                    nodes.push(ret)
+                }else{
+                    nodes.push(new Text(w))
                 }
-                return new Text(w)
             }
-        })
+        }
         nodes.forEach(n=>{
             p.appendChild(n)
         })
-
 
         return p
     }
@@ -727,8 +746,7 @@ export class Body {
     get_line_text(line:HTMLParagraphElement):string{
         let txt = ""
 
-        console.log("getline text", line);
-        
+        console.log
 
         const autocomplete_was_active = autocomplete.open
         if (autocomplete_was_active){
@@ -749,7 +767,11 @@ export class Body {
             }else if ((node as HTMLElement).classList && (node as HTMLElement).classList.contains("image")){
 
                 let img = (node as HTMLImageElement)
+                console.log(img?.style.width);
+                
                 txt += `##image:${img?.src}#${encodeURI(img?.style.width)}`
+                console.log(txt);
+                
 
             }else if (node.nodeName == "#text" || node.nodeName == "SPAN"){
                 txt+= node.textContent!
@@ -758,8 +780,6 @@ export class Body {
         if (autocomplete_was_active){
             autocomplete.restore()
         }
-        console.log(txt);
-        
         return txt
     }
 }
@@ -815,65 +835,83 @@ export function setCaret(node:Node,offset:number) {
 
 export type scriptLanguage = "js" 
 
+
+export class ScriptBody extends Body{
+    
+    save(){
+        console.log("saving script")
+        super.save()
+    }
+
+}
+
+
 export class ScriptNote extends Note{
 
     language:scriptLanguage
     outfield:HTMLDivElement
 
-    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){
+    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){        
 
-        super(title,path, creator,call_hist)
+        super(title,path, creator,call_hist,ScriptBody)
         this.language = "js"
         this.data.language = "js"
 
         this.body.content.classList.add("js")
-        const runbutton = document.createElement("div")
-        runbutton.innerHTML = "▶"
-        runbutton.classList.add("runbutton")
-
-
-        const preprun = ()=>{
-            function deepsave(b:Body){
-                if (b.saves_pending) b.save()
-                b.get_links().forEach(l=>{
-                    if (l.is_open && l.childnote){
-                        deepsave(l.childnote.body)
-                    }
-                })
-            }
-            deepsave(this.body)
-            runbutton.innerHTML = "O"
-            this.outfield.innerHTML = ""
-
-        }
-        const execute = ()=>{
-            this.execute_script(this.body)
-            runbutton.innerHTML = "▶"
-        }
-        
-        runbutton.addEventListener("mousedown", preprun)
-        runbutton.addEventListener("click", execute)
-        this.body.content.addEventListener("keydown",  (e:KeyboardEvent)=>{
-            if (e.key == "Enter" && e.ctrlKey){
-                preprun()
-                execute()
-            }
-        })
-        this.body.element.appendChild(runbutton)
         this.outfield = document.createElement("div")
-        this.outfield.classList.add("content")
-        this.outfield.classList.add("js")
-        this.body.element.appendChild(this.outfield)
+
+        if (this.data.Path.location[this.data.Path.location.length-1]=="js"){
+
+            const runbutton = document.createElement("div")
+            runbutton.innerHTML = "▶"
+            runbutton.classList.add("runbutton")
+
+            const preprun = ()=>{
+                function deepsave(b:Body){
+                    if (b.saves_pending) b.save()
+                    b.get_links().forEach(l=>{
+                        if (l.is_open && l.childnote){
+                            deepsave(l.childnote.body)
+                        }
+                    })
+                }
+                deepsave(this.body)
+                runbutton.innerHTML = "O"
+                this.outfield!.innerHTML = ""
+
+            }
+            const execute = ()=>{
+                this.execute_script(this.body)
+                runbutton.innerHTML = "▶"
+            }
+            
+            runbutton.addEventListener("mousedown", preprun)
+            runbutton.addEventListener("click", execute)
+            this.body.content.addEventListener("keydown",  (e:KeyboardEvent)=>{
+                if (e.key == "Enter" && e.ctrlKey){
+                    preprun()
+                    execute()
+                }
+            })
+            this.body.element.appendChild(runbutton)
+            this.outfield.classList.add("content")
+            this.outfield.classList.add("js")
+            this.body.element.appendChild(this.outfield)
+        }
     }
 
+    async get_flat_text(rawtext:string, body:Body):Promise<[string,[string,Link][]]>{
+        const lines = rawtext.split("\n")
+        let links:[string, Link][] = []
+        let lns = (await Promise.all(lines.map(async (line,lineidx)=>{
 
-    async get_content_text(body:Body, path:PathData, predefs: {vars:Set<string>, values: Array<[string,string]>}){
-        const dat = (await store.getitemblocking(path)).Content
+            if (/print[ ]*\(/.test(line)){
 
-        console.log("dat:",dat);        
-        
-        const lines = dat.split("\n")
-        let lns = (await Promise.all(lines.map(async line=>{
+                line = line.replaceAll(/print[ ]*\(/g, `print('${body.owner.data.Path.tostring()}:${lineidx+1}',`)
+                console.log(line);
+            }
+
+            if (line.trimStart().startsWith("//")) return
 
             let words = line.split(/([\s+[\]{}(),])/);
 
@@ -883,23 +921,30 @@ export class ScriptNote extends Note{
 
                     const L = new Link(word, body, true)
                     const pstring = L.path.tostring().replaceAll(".", "$").replaceAll(":", "$$$$").replace("#","")
-
-                    if (!predefs.vars.has(pstring)){
-                        predefs.vars.add(pstring)
-
-                        const nt = new Note(L.name, L.path,L,[])
-                        const link_content = await this.get_content_text(nt.body, L.path, predefs)                        
-
-                        predefs.values.push([pstring, link_content])
-                    }
+                    links.push([pstring,L])
                     return pstring
                 }
+                
                 return word
             }))).join("")
-        })))
-        console.log(lns);
-        
-        let txt = lns.join("\n")
+        }))).filter(l=>!l?.startsWith("//")).join("\n")
+        return [lns, links]
+    }
+
+    async get_content_text(body:Body, path:PathData, predefs: {vars:Set<string>, values: Array<[string,string]>}){
+
+        const dat = (await store.getitemblocking(path)).Content
+
+        let [txt,lnks] = await this.get_flat_text(dat,body)
+
+        for (let [pstring, L]  of lnks){
+            if (!predefs.vars.has(pstring)){
+                predefs.vars.add(pstring)
+                const nt = new Note(L.name, L.path,L,[])
+                const link_content = await this.get_content_text(nt.body, L.path, predefs)
+                predefs.values.push([pstring, link_content])
+            }
+        }
 
         return txt
     }
@@ -907,13 +952,15 @@ export class ScriptNote extends Note{
     async execute_script(body:Body){
 
         this.outfield.innerHTML = ""
-        // const predefs = new Map<string,string> ()
         const predefs = {vars:new Set<string>,values:new Array<[string,string]>}
         let content = await this.get_content_text(body, body.owner.data.Path, predefs)
+
+        console.log(content);
 
         const pref:string[] = []
         let linecount = 0
         let functdict:Map<string,number>  = new Map()
+
         predefs.values.forEach(i=>{
             const newlines = i[1].match(/\n/g)?.length ?? 0
             pref.push(`${i[0]} = ${i[1]}`)
@@ -922,36 +969,67 @@ export class ScriptNote extends Note{
         })
 
         content = "\n" +pref.join("\n") + "\n" + content
-        console.log(content);
 
-        window.print = ((...a:any[])=>{this.print(...a)}) as ()=>void
+        window.print = ((link:string,...a:any[])=>{
+            let sp = document.createElement("span")
+            sp.innerHTML = link
+            let lk = new Link(link, this.body,true)
+            this.print(lk.element, ...a)
+        }) as ()=>void
 
         (window as any).putout = ((element:any)=>{this.outfield.append(element)})
         try {
             const asyncContent = `return async function(){${content}}`
             console.log(asyncContent);
 
-            const fn = Function(asyncContent)()
-            let res = await fn()
+            const EXECUTOR = Function(asyncContent)()
+            let res = await EXECUTOR()
             if (res != undefined) this.print (res)
         } catch (error) {
 
-    
+            console.log(error);
+            
             let stack = (error as Error).stack?.split("\n");
             console.log(stack?.join("\n"));
+
+            if (stack && stack[0].startsWith("SyntaxError")){
+                console.log("SYNTAXERROR");
+
+                let messages = lint(content)
+                console.log(messages);
+            }
             
-            this.print("&nbsp;")
-            this.print(stack![0])
+            this.print(undefined, "&nbsp;")
+            this.print(undefined, stack![0])
             stack?.slice(1,-2).forEach(l=>{
-                // this.outfield.appendChild(this.body.make_line(l))
+
                 if (l.startsWith("    at ")){
+                    console.log(l);
+                    
                     let loc = l.slice(7).split(" ",2)[0]
+                    loc = loc.split(".")[0]
                     let lnum = l.split("<anonymous>:")[1].slice(0,-1)
                     let linenum = Number(lnum.split(":")[0]) - 3 - functdict.get(loc)!
-                    l =  "at #" + loc.replace("$$",":").replaceAll("$", ".") + ":" +  linenum
+
+                    if (isNaN(linenum)){
+                        let linenum = Number(lnum.split(":")[0])-3
+                        {// get func of global line
+                            let res = null
+                            for (let [k,v] of functdict){
+                                if (v>linenum)break
+                                res = [k,v]
+                            }
+                            loc = res![0] as string
+                            linenum = linenum - (res![1] as number)
+                        }
+                        // l = String(linenum) +   content.split("\n")[linenum]
+                        l =  "at #" + loc.replace("$$",":").replaceAll("$", ".") + ":" +  linenum
+                    }else{
+                        l =  "at #" + loc.replace("$$",":").replaceAll("$", ".") + ":" +  linenum
+                    }
                     this.outfield.appendChild(this.body.make_line(l))
                 }else{
-                    this.print(l)
+                    this.print(undefined, l)
                 }
             })
             if (stack){
@@ -965,7 +1043,34 @@ export class ScriptNote extends Note{
         }
     }
 
-    print(...texts:any[]){
+    save(){
+        let txt = this.body.get_content_text();
+
+        (async ()=>{
+            this.body.content.querySelectorAll(".lintingmessage").forEach(m=>m.remove())
+            
+            let [flat,links] = await this.get_flat_text(txt,this.body)
+
+            if (flat.startsWith("class")){
+                flat = "_x_ = " + flat 
+            }
+            let messages = lint(flat)
+            messages.forEach(m=>{
+                let p = this.body.content.childNodes[m.line-1]
+                let errormessage = document.createElement("p")
+                errormessage.innerHTML = m.message
+                errormessage.style.color = "red"
+                errormessage.style.fontStyle = "italic"
+                errormessage.classList.add("lintingmessage")
+                console.log(m);
+                p.appendChild(errormessage)
+            })
+        })()
+        this.data.Content = txt
+        store.setitem(this.data);
+    }
+
+    print(link?:HTMLElement, ...texts:any[]){
         const p = document.createElement("p")
 
         function stringify(t:any):string{
@@ -979,6 +1084,11 @@ export class ScriptNote extends Note{
         }
 
         p.innerHTML = texts.map(stringify).join(" ")
+
+        if (link){
+            link.style.float = "right"
+            p.appendChild(link)
+        }
         this.outfield.appendChild(p)
     }
 }
@@ -1141,3 +1251,4 @@ class TableBody extends Body{
         this.save_lazy()
     }
 }
+

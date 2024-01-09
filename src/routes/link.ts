@@ -25,17 +25,12 @@ export class Link {
 
     constructor(name:string, parent:Body, compact:boolean) {
 
-        console.log("new link",name);
-        
-
         this.element = document.createElement("span");
 
         this.parent = parent
         this.element.classList.add("link")
                 
         this.path = parent.owner.data.Path.create_child(name)
-
-        console.log(this.path);
         
         this.name = name;
         this.name.split(":").slice(1).forEach(p=>{
@@ -96,7 +91,7 @@ export class Link {
         this.is_open = true
         this.element.classList.add("open")
 
-        if (this.path.location.slice(-1)[0] == "js"){
+        if (this.path.location.includes("js")){
             this.childnote = new ScriptNote(this.name, this.path,this,call_hist)
         }else{
             this.childnote = new Note(this.name, this.path,this,call_hist)
@@ -263,9 +258,6 @@ export class PathData{
 }
 
 export function get_path_data(path:string, default_author?:string):PathData{
-
-    console.log(path);
-    
 
     if (path.startsWith("@")) path = path.replace("@", "#me:")
 

@@ -8,8 +8,7 @@ body {
 	background-color: var(--dark);
 	height:100vh;
 
-	--dark: #272523;
-	/* --dark: #000000; */
+	--dark: #272625;
 
 	--blue:rgb(105, 146, 255);
 	--blue:rgb(155, 162, 255);
@@ -197,7 +196,8 @@ div.editable>p>span.typo{
 .runbutton{
 	color:rgb(8, 165, 8);
 	font-weight: bold;
-	background: #514e48;
+	/* background: #514e48; */
+	background: var(--focus);
 	width:1em;
 	height: 1em;
 	padding: .5em;
@@ -205,7 +205,7 @@ div.editable>p>span.typo{
 	border-radius: .5em;
 	cursor: pointer;
 	text-shadow: 0 .1em .1em rgba(0, 0, 0, 0.697);
-	box-shadow: 0 .2em 0 rgb(49, 49, 49);
+	box-shadow: 0 .2em 0 var(--dark);
 	font-size: 1.1em;
 	font-family:"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
 

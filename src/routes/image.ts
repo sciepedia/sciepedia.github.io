@@ -8,7 +8,8 @@ export class Image{
     constructor(url:string){
 
         let parts = url.split("#")
-        console.log(parts);
+        console.log(url);
+        
         let maxw = decodeURI(parts[1])
         url = parts[0]
 
