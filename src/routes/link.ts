@@ -24,9 +24,6 @@ export class Link {
     focusline: number | null = null
 
     constructor(name:string, parent:Body, compact:boolean) {
-
-        
-        console.log("new link", {name});
         
         this.element = document.createElement("span");
         

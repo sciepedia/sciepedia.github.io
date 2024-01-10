@@ -18,7 +18,7 @@ export function hash(arg: string) {
 }
 
 export function is_link(txt:string):boolean{
-    return /^((\.\.)|[\#\@\_\.])[a-z0-9ßäöüø_]+([.:][a-z0-9ßäöüø_]+)*\.?$/.test(txt)
+    return /^((\.\.)|[\#\@\_\.])[a-zA-Z0-9ßäöüÄÖÜø_]+([.:][a-zA-Z0-9ßäöüÄÖÜø_]+)*\.?$/.test(txt)
 }
 
 export function valid_username(txt:string){
