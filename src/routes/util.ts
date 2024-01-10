@@ -18,28 +18,11 @@ export function hash(arg: string) {
 }
 
 export function is_link(txt:string):boolean{
-    console.log(txt);
-    txt = txt.trim()
-    let prefixes = ["..",".","_","#","@"]
-
-    for (let i = 0; i < prefixes.length; i++) {
-        if (txt.startsWith(prefixes[i])) {
-            let iname = is_name(txt.slice(prefixes[i].length))
-            return iname
-        }
-    }
-    return false
+    return /^((\.\.)|[\#\@\_\.])[a-z0-9ßäöüø_]+([.:][a-z0-9ßäöüø_]+)*\.?$/.test(txt)
 }
 
-export function is_name(txt:string){
-
-    for (let part of txt.split(/\.|\:/)){
-        console.log(part);
-        if (!/^[a-z0-9ßäöüø_]+$/i.test(part)){
-            return false
-        }
-    }
-    return true
+export function is_path_name(txt:string){
+    return /^[a-z0-9ßäöüø_]+([.:][a-z0-9ßäöüø_]+)*\.?$/.test(txt)
 }
 
 export function is_http_link(name:string):boolean{
