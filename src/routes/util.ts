@@ -46,19 +46,22 @@ export function is_legal_name(name:string):boolean{
 }
 
 export function is_link(txt:string):boolean{
-
+    console.log(txt);
     txt = txt.trim()
+
+    
+
     let prefixes = ["..",".","_","#","@"]
 
-    for (let i = 0; i < prefixes.length; i++) if (txt.startsWith(prefixes[i])) return is_name(txt.slice(prefixes[i].length))
+    for (let i = 0; i < prefixes.length; i++) {
+        if (txt.startsWith(prefixes[i])) return is_name(txt.slice(prefixes[i].length))
+    }
     return false
 }
 
 export function is_name(txt:string){
-    if (txt==""){
-        return false
-    }
-    return (/[a-z0-9,ß,ä,ö,ü,ø]/i.test(txt[0]))
+
+    return (/^[a-z0-9,ß,ä,ö,ü,ø,.,\:,_]+$/i.test(txt))
 }
 
 export function is_http_link(name:string):boolean{
