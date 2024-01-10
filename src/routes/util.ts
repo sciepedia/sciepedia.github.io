@@ -21,8 +21,8 @@ export function is_link(txt:string):boolean{
     return /^((\.\.)|[\#\@\_\.])[a-z0-9ßäöüø_]+([.:][a-z0-9ßäöüø_]+)*\.?$/.test(txt)
 }
 
-export function is_path_name(txt:string){
-    return /^[a-z0-9ßäöüø_]+([.:][a-z0-9ßäöüø_]+)*\.?$/.test(txt)
+export function valid_username(txt:string){
+    return /^[a-z0-9ßäöüø_]+$/.test(txt)
 }
 
 export function is_http_link(name:string):boolean{

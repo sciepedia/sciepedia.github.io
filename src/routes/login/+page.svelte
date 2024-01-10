@@ -4,7 +4,7 @@
 
     import { createClient, type SignUpWithPasswordCredentials} from '@supabase/supabase-js'
     import { get_user_name, login, register, set_user_name } from '../backend';
-    import { hash } from '../util';
+    import { hash, valid_username } from '../util';
     import { email, pwdhash, username } from '../store';
 
 
