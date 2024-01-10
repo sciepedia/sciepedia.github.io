@@ -253,11 +253,10 @@ export class PathData{
         throw "invalid path: "+title
     }
 
-    pretty(){
-        const res = this.location.join(".")+`<span class='author'> by ${this.author}</span>`
-        return res
-        
-    }
+    // pretty(){
+    //     const res = this.location.join(".")+`<span class='author'> by ${this.author}</span>`
+    //     return res
+    // }
 }
 
 export function get_path_data(path:string, default_author?:string):PathData{

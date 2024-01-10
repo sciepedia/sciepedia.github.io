@@ -1,5 +1,3 @@
-import { pretty_path } from "./note"
-
 
 export class Rater{
 
@@ -24,7 +22,8 @@ export class Rater{
         container.classList.add("container")
         this.element.appendChild(container)
         
-        container.innerHTML = `<h2>${title}</h2>`
+        container.append(document.createElement("h2"))
+        container.childNodes[0].textContent = title
 
         var stars_element = document.createElement("p")
         stars_element.classList.add("stars")

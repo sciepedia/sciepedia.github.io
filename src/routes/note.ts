@@ -117,7 +117,7 @@ export class Head {
                     })
                     this.note.data.Path = newpath
                     this.note.data.id = data.id
-                    const new_title = creator.rename(newpath)
+                    const new_title  = creator.rename(newpath)
                     
                     this.set_title(title)
 
@@ -220,8 +220,9 @@ export class Head {
 
         const setroot = (_:MouseEvent)=>{
             
-            this.title = this.note.data.Path.pretty()
-            this.title_element.innerHTML = this.title
+            this.title = this.note.data.Path.tostring()
+            this.title_element.textContent = this.note.data.Path.location.join(".")
+            this.title_element.innerHTML += `<span class='author'> by ${this.note.data.Path.author}</span>`
 
             page.removeChild(page.firstChild!)
             page.appendChild(this.note.element)
@@ -1065,7 +1066,7 @@ export class ScriptNote extends Note{
             messages.forEach(m=>{
                 let p = this.body.content.childNodes[m.line-1]
                 let errormessage = document.createElement("p")
-                errormessage.innerHTML = m.message
+                errormessage.textContent = m.message
                 errormessage.style.color = "red"
                 errormessage.style.fontStyle = "italic"
                 errormessage.classList.add("lintingmessage")

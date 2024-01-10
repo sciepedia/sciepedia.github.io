@@ -28,7 +28,7 @@ export function typo_element (word:string){
     }
     const spn = document.createElement("span")
     spn.classList.add("typo")
-    spn.innerHTML = word
+    spn.textContent = word
     spn.addEventListener("contextmenu",e=>{
         const suggestions = get_suggestions(word)
         autocomplete.fill(spn,suggestions)
@@ -67,7 +67,7 @@ export function code_element(word:string){
 
         if (i.pattern(word)){
             res = document.createElement("span")
-            res.innerHTML = word
+            res.textContent = word
             res.style.color = i.color
         }
     })

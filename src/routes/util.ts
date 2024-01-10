@@ -48,13 +48,13 @@ export function is_legal_name(name:string):boolean{
 export function is_link(txt:string):boolean{
     console.log(txt);
     txt = txt.trim()
-
-    
-
     let prefixes = ["..",".","_","#","@"]
 
     for (let i = 0; i < prefixes.length; i++) {
-        if (txt.startsWith(prefixes[i])) return is_name(txt.slice(prefixes[i].length))
+        if (txt.startsWith(prefixes[i])) {
+            let iname = is_name(txt.slice(prefixes[i].length))
+            return iname
+        }
     }
     return false
 }
@@ -64,6 +64,8 @@ export function is_name(txt:string){
     return (/^[a-z0-9,ß,ä,ö,ü,ø,.,\:,_]+$/i.test(txt))
 }
 
+
+
 export function is_http_link(name:string):boolean{
     return (name.startsWith("http://") || name.startsWith("https://"))
 }
@@ -72,7 +74,7 @@ export function make_http_link(target:string):HTMLSpanElement{
     
     let spn = document.createElement("span")
 
-    spn.innerHTML = target
+    spn.textContent = target
     spn.classList.add("httplink")
 
     spn.addEventListener("click",e=>{
