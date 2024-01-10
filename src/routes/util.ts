@@ -61,7 +61,7 @@ export function is_link(txt:string):boolean{
 
 export function is_name(txt:string){
 
-    for (let part of txt.split(/\.,\:/)){
+    for (let part of txt.split(/\.|\:/)){
         console.log(part);
         if (!/^[a-z0-9,ß,ä,ö,ü,ø,_]+$/i.test(part)){
             return false
