@@ -173,7 +173,10 @@ export class Head {
 
         const ht = parts.join(".").replaceAll("_"," ") 
         this.title_element.textContent = ht
-        this.title_element.innerHTML += `<span class='author'> by ${this.note.data.Path.author} </span>`
+        let authortag = document.createElement("span")
+        authortag.classList.add("author")
+        authortag.textContent = ` by ${this.note.data.Path.author}`
+        this.title_element.append(authortag)
     }
 
 
@@ -222,7 +225,10 @@ export class Head {
             
             this.title = this.note.data.Path.tostring()
             this.title_element.textContent = this.note.data.Path.location.join(".")
-            this.title_element.innerHTML += `<span class='author'> by ${this.note.data.Path.author}</span>`
+            let authortag = document.createElement("span")
+            authortag.classList.add("author")
+            authortag.textContent = ` by ${this.note.data.Path.author}`
+            this.title_element.append(authortag)
 
             page.removeChild(page.firstChild!)
             page.appendChild(this.note.element)
@@ -980,7 +986,7 @@ export class ScriptNote extends Note{
 
         window.print = ((link:string,...a:any[])=>{
             let sp = document.createElement("span")
-            sp.innerHTML = link
+            sp.textContent = link
             let lk = new Link(link, this.body,true)
             this.print(lk.element, ...a)
         }) as ()=>void
@@ -1092,7 +1098,7 @@ export class ScriptNote extends Note{
                     sp.style.color = "orange"
                 }
                 let st = String(t)
-                sp.innerHTML = st
+                sp.textContent = st
             }else{
                 
                 let tag = "Object"

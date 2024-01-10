@@ -88,7 +88,7 @@ export class Autocomplete{
         pred.forEach(element => {
 
             const prediction_line = document.createElement("p")
-            prediction_line.innerHTML = element[0]
+            prediction_line.textContent = element[0]
             this.element!.appendChild(prediction_line)
 
             prediction_line.addEventListener("click", ()=>{
@@ -116,7 +116,7 @@ export class Autocomplete{
         items.forEach(element => {
 
             const prediction_line = document.createElement("p")
-            prediction_line.innerHTML = element 
+            prediction_line.textContent = element 
             this.element!.appendChild(prediction_line)
 
             prediction_line.addEventListener("click", ()=>{
