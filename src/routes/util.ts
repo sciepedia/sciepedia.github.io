@@ -1,24 +1,6 @@
 
 const SALT = "d8&"
 
-export async function user_hash(username:string, password:string){
-    return await sha256(username+password+SALT)
-}
-
-async function sha256(message:string){
-    // encode as UTF-8
-    const msgBuffer = new TextEncoder().encode(message);                    
-
-    // hash the message
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-
-    // convert ArrayBuffer to Array
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-    // convert bytes to hex string                  
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-}
 
 export function hash(arg: string) {
 
@@ -33,16 +15,6 @@ export function hash(arg: string) {
     }
 
     return String(hash);
-}
-
-export function is_legal_name(name:string):boolean{
-
-    let starter = name[0]
-    if (!Boolean( starter.match( /[a-z]/ ))){
-        return false
-    }
-
-    return name.replace(/[a-z,A-Z,0-9,\-,\_]/g,"")==""
 }
 
 export function is_link(txt:string):boolean{
@@ -63,14 +35,12 @@ export function is_name(txt:string){
 
     for (let part of txt.split(/\.|\:/)){
         console.log(part);
-        if (!/^[a-z0-9,ß,ä,ö,ü,ø,_]+$/i.test(part)){
+        if (!/^[a-z0-9ßäöüø_]+$/i.test(part)){
             return false
         }
     }
     return true
 }
-
-
 
 export function is_http_link(name:string):boolean{
     return (name.startsWith("http://") || name.startsWith("https://"))
