@@ -26,7 +26,7 @@ let hist: PathData[] = []
 const linter = new eslint.Linter()
 const lint = (txt:string) => linter.verify(txt,{
     parserOptions:{
-        "ecmaVersion": 6,
+        "ecmaVersion": 7,
     }
 })
 
@@ -504,7 +504,8 @@ export class Body {
         let p = document.createElement("p")
         let nodes:Node[] = []
 
-        for (let i in words){
+        for (let c in words){
+            let i  = Number (c)
             let w = words[i]
             if (is_link(w) && (!w.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
                 const link = new Link(w,this,compact)
@@ -705,6 +706,7 @@ export class Body {
                 })
             }
         })
+        this.content.focus()
     }
 
     save(){        
@@ -1073,22 +1075,85 @@ export class ScriptNote extends Note{
     print(link?:HTMLElement, ...texts:any[]){
         const p = document.createElement("p")
 
-        function stringify(t:any):string{
+        let is_simple = (t:any)=> ["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null
 
-            if (["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null) return String(t)
-            if (t instanceof Array){
-                return `[${(t.map(stringify).join(","))}]`
+        function parse(t:any):HTMLElement{
+
+            let sp = document.createElement("span")
+            if (is_simple(t)){
+
+                if ( ["number", "boolean"].includes(typeof t)) {
+                    sp.style.color = "orange"
+                }
+                let st = String(t)
+                sp.innerHTML = st
+            }else{
+                
+                let tag = "Object"
+                if (t instanceof Array) tag=  "Array"
+                tag += ` [${Object.keys(t).length}]`
+                sp.style.color = "var(--blue)"
+                sp.style.cursor = "pointer"
+
+                let isopen = false
+                let p : HTMLParagraphElement | undefined
+
+                function open(){
+                    isopen = true
+                    p = document.createElement("p")
+                    p.style.paddingLeft = "2em"
+                    console.log("click");
+                    sp.append(p)
+                    for (let key of Object.keys(t)){
+                        p.append(key, ": ")
+                        p.append(parse(t[key]))
+                        p.append(document.createElement("br"))
+                    }
+                }
+                sp.addEventListener('click',(e)=>{
+                    if (e.target != sp) return
+                    if (isopen){
+                        p?.remove()
+                        isopen = false
+                        return
+                    }
+                    open()
+                })
+
+                let previtems = []
+                for (let key of Object.keys(t)){
+                    if (previtems.length>3){
+                        previtems.push("...")
+                        break
+                    }
+                    let newitem = ""
+                    if (!(t instanceof Array)){
+                        newitem += key + ": "
+                    }
+                    newitem  += t[key]
+                    previtems.push(newitem)
+                }
+
+                let preview = document.createElement("span")
+                preview.textContent = previtems.join(", ")
+                preview.style.color = "var(--color)"
+
+                sp.textContent = tag + " "
+                sp.append(preview)
+
             }
-
-            return JSON.stringify(t)
+            return sp
         }
-
-        p.innerHTML = texts.map(stringify).join(" ")
 
         if (link){
             link.style.float = "right"
             p.appendChild(link)
         }
+
+        let el = document.createElement("span")
+        el.append(...texts.map(parse))
+        p.appendChild(el)
+        
         this.outfield.appendChild(p)
     }
 }

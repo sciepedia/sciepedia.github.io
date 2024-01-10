@@ -25,11 +25,14 @@ export class Link {
 
     constructor(name:string, parent:Body, compact:boolean) {
 
+        
+        console.log("new link", {name});
+        
         this.element = document.createElement("span");
-
+        
         this.parent = parent
         this.element.classList.add("link")
-                
+        
         this.path = parent.owner.data.Path.create_child(name)
         
         this.name = name;
@@ -37,7 +40,7 @@ export class Link {
             if (!isNaN(Number(p))) this.focusline = Number(p) - 1
         })
         
-        this.element.innerHTML = name
+        this.element.textContent = name
 
         this.element.onclick = (e)=>{
 
@@ -74,9 +77,9 @@ export class Link {
 
         if (!this.expanded && !this.is_open){
             let compact_name = get_compact_link_name(this.name)
-            this.element.innerHTML = compact_name
+            this.element.textContent = compact_name
         }else{
-            this.element.innerHTML = this.name
+            this.element.textContent = this.name
         }
 
         this.parent.save_lazy()
@@ -141,9 +144,9 @@ export class Link {
             }
 
             let compact_name = get_compact_link_name(name,!this.parent.owner.data.Path.location.includes("js"))
-            this.element.innerHTML = compact_name
+            this.element.textContent = compact_name
         }else{
-            this.element.innerHTML = this.name
+            this.element.textContent = this.name
         }
     }
 }
