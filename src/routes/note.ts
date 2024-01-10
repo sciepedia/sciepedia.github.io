@@ -514,8 +514,12 @@ export class Body {
             let w = words[i]
             if (is_link(w) && (!w.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
                 console.log(w, "islink.");
-                const link = new Link(w,this,compact)
-                nodes.push(link.element)
+                try{
+                    const link = new Link(w,this,compact)
+                    nodes.push(link.element)
+                }catch{
+                    nodes.push(new Text(w))
+                }
             }else if(is_http_link(w)){
                 nodes.push(make_http_link(w))
             }else if(w.startsWith("##image:")){
