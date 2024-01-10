@@ -171,8 +171,9 @@ export class Head {
         }
         parts = parts.map(p => p.split(":")[0])
 
-        const ht = parts.join(".").replaceAll("_"," ") + (`<span class='author'> by ${this.note.data.Path.author} </span>`)
-        this.title_element.innerHTML = ht
+        const ht = parts.join(".").replaceAll("_"," ") 
+        this.title_element.textContent = ht
+        this.title_element.innerHTML += `<span class='author'> by ${this.note.data.Path.author} </span>`
     }
 
 
@@ -491,6 +492,9 @@ export class Body {
 
     make_line(txt:string,compact:boolean=true): HTMLElement{
 
+        console.log(txt);
+        
+
         if (txt == ""){
             let p = document.createElement("p")
             p.innerHTML = "<br>"
@@ -508,6 +512,7 @@ export class Body {
             let i  = Number (c)
             let w = words[i]
             if (is_link(w) && (!w.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
+                console.log(w, "islink.");
                 const link = new Link(w,this,compact)
                 nodes.push(link.element)
             }else if(is_http_link(w)){
