@@ -8,11 +8,16 @@ import { Autocomplete, add_title_completion } from "./autocomplete"
 import { code_element, typo_element } from "./spellchecker"
 import { username } from "./store"
 
+import * as esprima from "esprima"
+
+
 
 import * as eslint from "eslint-linter-browserify";
 
 import { get } from "svelte/store"
 import { CommentSection, type CommentElement } from "./comments"
+import { exclude_internal_props } from "svelte/internal"
+import { can_preview_code, preview_code } from "./script"
 
 export var title_list:{element:HTMLElement,fullpath:PathData}[] = [] 
 export var root = {path:"_home:"+get(username)}
@@ -866,8 +871,10 @@ export class ScriptNote extends Note{
 
     language:scriptLanguage
     outfield:HTMLDivElement
+    previewfield:HTMLDivElement
 
     constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){        
+
 
         super(title,path, creator,call_hist,ScriptBody)
         this.language = "js"
@@ -875,6 +882,10 @@ export class ScriptNote extends Note{
 
         this.body.content.classList.add("js")
         this.outfield = document.createElement("div")
+        this.previewfield = document.createElement("p")
+        this.body.element.appendChild(this.previewfield)
+        this.previewfield.classList.add("content","js")
+        this.previewfield.style.color = "var(--grey)"
 
         if (this.data.Path.location[this.data.Path.location.length-1]=="js"){
 
@@ -914,6 +925,20 @@ export class ScriptNote extends Note{
             this.outfield.classList.add("js")
             this.body.element.appendChild(this.outfield)
         }
+
+        this.body.content.addEventListener("input", ()=>{
+
+            let focusline:Node = window.getSelection()?.focusNode!
+            while (focusline.nodeName != "P"){
+                focusline = focusline.parentNode!
+                if (focusline == null || focusline.nodeName == "DIV")return 
+            }
+
+            let text = this.body.get_line_text(focusline as HTMLParagraphElement)
+            let prev = preview_code(text)
+            if (prev) this.previewfield.textContent = String(prev)            
+            else{this.previewfield.textContent = ""}
+        })
     }
 
     async get_flat_text(rawtext:string, body:Body):Promise<[string,[string,Link][]]>{
@@ -924,7 +949,6 @@ export class ScriptNote extends Note{
             if (/print[ ]*\(/.test(line)){
 
                 line = line.replaceAll(/print[ ]*\(/g, `print('${body.owner.data.Path.tostring()}:${lineidx+1}',`)
-                console.log(line);
             }
 
             if (line.trimStart().startsWith("//")) return
@@ -1078,7 +1102,7 @@ export class ScriptNote extends Note{
                 errormessage.style.color = "red"
                 errormessage.style.fontStyle = "italic"
                 errormessage.classList.add("lintingmessage")
-                console.log(m);
+
                 p.appendChild(errormessage)
             })
         })()
@@ -1087,6 +1111,8 @@ export class ScriptNote extends Note{
     }
 
     print(link?:HTMLElement, ...texts:any[]){
+
+
         const p = document.createElement("p")
 
         let is_simple = (t:any)=> ["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null
@@ -1094,6 +1120,7 @@ export class ScriptNote extends Note{
         function parse(t:any):HTMLElement{
 
             let sp = document.createElement("span")
+            let tag = t.constructor.name
             if (is_simple(t)){
 
                 if ( ["number", "boolean"].includes(typeof t)) {
@@ -1103,9 +1130,7 @@ export class ScriptNote extends Note{
                 sp.textContent = st
 
             }else{
-                
-                let tag = "Object"
-                if (t instanceof Array) tag=  "Array"
+
                 tag += ` [${Object.keys(t).length}]`
                 sp.style.color = "var(--blue)"
                 sp.style.cursor = "pointer"

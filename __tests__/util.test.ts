@@ -7,7 +7,7 @@ import {is_link, is_youtube_link, make_youtube_player, valid_username} from "../
 
 
 
-test('test utils', () => {
+test('test is_link', () => {
 
   expect(is_link("#link")).toBe(true)
   expect(is_link("#link.sin:auth.me:dd")).toBe(true)

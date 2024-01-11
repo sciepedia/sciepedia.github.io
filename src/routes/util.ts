@@ -33,6 +33,10 @@ export function is_youtube_link(name:string):boolean{
 export function make_youtube_player(name:string){
     //<iframe width="560" height="315" src="https://www.youtube.com/embed/YourVideoID" frameborder="0" allowfullscreen></iframe>
     let element = document.createElement("iframe")
+    element.width = "560"
+    element.height = "315"
+    element.style.border = "0"
+
     if (name.startsWith("https://www.youtube.com/embed")){
         element.src = name
     }else{

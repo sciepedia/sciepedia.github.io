@@ -13,7 +13,7 @@ export let store = {
 
     getitem : (Path:PathData,callback:(s:NoteData)=>void)=>{
 
-        var res:NoteData = {Path, Content:"…",language:Path.location.slice(-1)[0]=='js'?"js":"txt",id:crypto.randomUUID()}
+        var res:NoteData = {Path, Content:"…",language:Path.location.slice(-1)[0]=='js'?"js":"txt",id:crypto.randomUUID() as uuid}
         const key = JSON.stringify(Path)
 
         if (store.has(Path)){
@@ -43,7 +43,7 @@ export let store = {
     },
 
     getitemblocking : async (Path:PathData)=>{
-        var res:NoteData | null = {Path, Content:"…",language:Path.location.slice(-1)[0]=='js'?"js":"txt",id:crypto.randomUUID()}
+        var res:NoteData | null = {Path, Content:"…",language:Path.location.slice(-1)[0]=='js'?"js":"txt",id:crypto.randomUUID() as uuid}
         const key = JSON.stringify(Path)
 
         if (store.has(Path)){
@@ -66,8 +66,8 @@ export let store = {
 
         if (res != null){
             res.Path = new PathData(res.Path.pub,res.Path.author,res.Path.location)
+            res.language = Path.location.slice(-1)[0]=='js'?"js":"txt"
         }
-        res.language = Path.location.slice(-1)[0]=='js'?"js":"txt"
 
         return res
     },
