@@ -25,6 +25,24 @@ export function valid_username(txt:string){
     return /^[a-z0-9ßäöüø_]+$/.test(txt)
 }
 
+export function is_youtube_link(name:string):boolean{
+    //https://www.youtube.com/watch?v=8U8kK3SpLTU&t=745s
+    return (name.startsWith("https://www.youtube.com/watch") || name.startsWith("https://www.youtube.com/embed"))
+}
+
+export function make_youtube_player(name:string){
+    //<iframe width="560" height="315" src="https://www.youtube.com/embed/YourVideoID" frameborder="0" allowfullscreen></iframe>
+    let element = document.createElement("iframe")
+    if (name.startsWith("https://www.youtube.com/embed")){
+        element.src = name
+    }else{
+        let ID = name.split("watch?v=")[1].split("&t")[0]
+        element.src = `https://www.youtube.com/embed/${ID}`
+    }
+    element.classList.add("youtubeplayer")
+    return element
+}
+
 export function is_http_link(name:string):boolean{
     return (name.startsWith("http://") || name.startsWith("https://"))
 }

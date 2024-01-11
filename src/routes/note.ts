@@ -1,4 +1,4 @@
-import { is_http_link, is_link, make_http_link, cleanMarkup } from "./util"
+import { is_http_link, is_link, make_http_link, cleanMarkup, is_youtube_link, make_youtube_player } from "./util"
 import { Link, get_link, get_path_data, is_link_element, is_typo_element, type PathData } from "./link"
 import { Image, image_from_file } from "./image"
 import { store, type NoteData, type uuid } from "./data_store"
@@ -523,7 +523,8 @@ export class Body {
                     nodes.push(new Text(w))
                 }
             }else if(is_http_link(w)){
-                nodes.push(make_http_link(w))
+                if (is_youtube_link(w))nodes.push(make_youtube_player(w))
+                else nodes.push(make_http_link(w))
             }else if(w.startsWith("##image:")){
                 const img = new Image(txt.slice(8))
                 nodes.push(img.element)
@@ -786,7 +787,8 @@ export class Body {
                 txt += `##image:${img?.src}#${encodeURI(img?.style.width)}`
                 console.log(txt);
                 
-
+            }else if((node as HTMLElement).classList && (node as HTMLElement).classList.contains("youtubeplayer")){
+                txt += (node as HTMLIFrameElement).src
             }else if (node.nodeName == "#text" || node.nodeName == "SPAN"){
                 txt+= node.textContent!
             }
@@ -1099,6 +1101,7 @@ export class ScriptNote extends Note{
                 }
                 let st = String(t)
                 sp.textContent = st
+
             }else{
                 
                 let tag = "Object"
