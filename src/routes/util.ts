@@ -22,7 +22,7 @@ export function is_link(txt:string):boolean{
 }
 
 export function valid_username(txt:string){
-    return /^[a-z0-9ßäöüø_]+$/.test(txt)
+    return /^[a-z0-9ßäöüø_]+$/.test(txt) && /^[a-zäöüø_]/.test(txt)
 }
 
 export function is_youtube_link(name:string):boolean{

@@ -91,6 +91,17 @@ export class Link {
         this.is_open = true
         this.element.classList.add("open")
 
+
+        if (this.parent.editable){
+            console.log("opening edit link");
+        }else{
+            console.log("opening read link",this.name);
+            if (!/:[a-zäöü_]/.test(this.name)){
+                console.log("no author");
+            }
+            
+        }
+
         if (this.path.location.includes("js")){
             this.childnote = new ScriptNote(this.name, this.path,this,call_hist)
         }else{

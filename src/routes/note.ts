@@ -8,10 +8,6 @@ import { Autocomplete, add_title_completion } from "./autocomplete"
 import { code_element, typo_element } from "./spellchecker"
 import { username } from "./store"
 
-import * as esprima from "esprima"
-
-
-
 import * as eslint from "eslint-linter-browserify";
 
 import { get } from "svelte/store"
@@ -24,14 +20,12 @@ export var root = {path:"_home:"+get(username)}
 export let autocomplete = new Autocomplete()
 
 
-
 let hist: PathData[] = []
-
 
 const linter = new eslint.Linter()
 const lint = (txt:string) => linter.verify(txt,{
     parserOptions:{
-        "ecmaVersion": 7,
+        "ecmaVersion": "latest",
     }
 })
 
