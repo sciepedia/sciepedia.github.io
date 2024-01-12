@@ -4,13 +4,56 @@ import * as esprima from  "esprima"
 
 export function can_preview_code(code:string){
 
-    try{
-                
+
+
+    // esprima.Syntax.ArrayExpression
+    function can_preview_expression(expression:any){
+        if (["MemberExpression","Literal","Identifier"].includes(expression.type)) return true
+        console.log(expression.type);
+        
+        if (expression.type == "BinaryExpression"){
+            if (can_preview_expression(expression.left) && can_preview_expression(expression.right)){
+                return true
+            }
+        }else if (expression.type == "ObjectExpression"){
+            console.log(expression);
+            for (let prop of expression.properties ){
+                if (! can_preview_expression(prop.key) && can_preview_expression(prop.value)){
+                    console.log("cant prev",prop);
+                    
+                    return false
+                }
+            }
+            return true
+            
+        }else if (expression.type == "ArrayExpression"){
+            for (let el of expression.elements){
+                if (! can_preview_expression(el)){
+                    console.log("cant preview", el);
+                    return false
+                }
+            }
+            return true
+        }else if(expression.type == "CallExpression"){
+            if (expression.callee.type =="MemberExpression"){
+
+                if (expression.callee.object.type == "Literal"){
+                    console.log("literal");
+                    
+                    for (let arg of expression.arguments){
+                        if (! can_preview_expression(arg)) return false
+                    }
+                    return true
+                }
+            }
+        }
+        console.log("cant preview",expression );
+        return false
+    }
+    try{ 
         let statement = esprima.parseScript(code).body[0]
         if (statement.type == "ExpressionStatement"){
-            if (["MemberExpression","Literal","Identifier"].includes(statement.expression.type)){
-                return true
-            }            
+            return can_preview_expression(statement.expression)
         }
         console.log(statement);
     }catch(e){
@@ -21,17 +64,18 @@ export function can_preview_code(code:string){
 
 
 export function preview_code(code:string){
-    
-    if (can_preview_code(code)){
-        let fn = Function(`return ${code}`)
-        return fn()
-    }
+    try{
+
+        if (can_preview_code(code)){
+            let fn = Function(`return ${code}`)
+            return fn()
+        }
+    }catch{}
     return ""
 }
 
 
 export function wrap_code_function(code:string){
-
 
     try{
 

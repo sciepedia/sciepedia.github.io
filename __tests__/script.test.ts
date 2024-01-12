@@ -8,5 +8,7 @@ test("can_preview_code",()=>{
     expect(can_preview_code("console.log(22)")).toBeFalsy()
     expect(can_preview_code("while(true){}")).toBeFalsy()
     expect(can_preview_code("fetch(\"https://google.com\")")).toBeFalsy()
+    expect(can_preview_code("document.write('content')")).toBeFalsy()
+    expect(can_preview_code(`"eee"+(document.write('content'))`))
 
 })
