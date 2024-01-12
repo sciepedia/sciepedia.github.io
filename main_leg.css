@@ -120,6 +120,7 @@ div.editable>p>span.typo{
 
 
 	border-left: 2px solid var(--focus);
+	/* border-bottom: 2px solid var(--focus); */
 }
 
 .content{
