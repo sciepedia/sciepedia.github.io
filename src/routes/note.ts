@@ -13,7 +13,7 @@ import * as eslint from "eslint-linter-browserify";
 import { get } from "svelte/store"
 import { CommentSection, type CommentElement } from "./comments"
 import { exclude_internal_props } from "svelte/internal"
-import { can_preview_code, preview_code } from "./script"
+import { can_preview_code, preview_code, wrap_code_function } from "./script"
 
 export var title_list:{element:HTMLElement,fullpath:PathData}[] = [] 
 export var root = {path:"_home:"+get(username)}
@@ -1013,12 +1013,12 @@ export class ScriptNote extends Note{
 
         (window as any).putout = ((element:any)=>{this.outfield.append(element)})
         try {
-            const asyncContent = `return async function(){${content}}`
-            console.log(asyncContent);
+            // const asyncContent = `return async function(){${content}}`
+            // console.log(asyncContent);
 
-            const EXECUTOR = Function(asyncContent)()
+            const EXECUTOR = Function(wrap_code_function(content))()
             let res = await EXECUTOR()
-            if (res != undefined) this.print (res)
+            if (res != undefined) this.print (undefined,res)
         } catch (error) {
 
             console.log(error);
@@ -1033,7 +1033,7 @@ export class ScriptNote extends Note{
                 console.log(messages);
             }
             
-            this.print(undefined, "&nbsp;")
+            this.print(undefined, "\ ")
             this.print(undefined, stack![0])
             stack?.slice(1,-2).forEach(l=>{
 
@@ -1180,6 +1180,8 @@ export class ScriptNote extends Note{
         }
 
         if (link){
+            console.log(link);
+            
             link.style.float = "right"
             p.appendChild(link)
         }
