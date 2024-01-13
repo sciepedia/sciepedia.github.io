@@ -322,6 +322,8 @@ div.editable>p>span.typo{
 
 .head>*{
 	cursor: pointer;
+	-ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .head:hover>.navbutton{
