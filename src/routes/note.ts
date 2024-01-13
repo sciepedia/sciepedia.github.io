@@ -759,8 +759,7 @@ export class Body {
 
     get_line_text(line:HTMLParagraphElement):string{
         let txt = ""
-
-        console.log
+        
 
         const autocomplete_was_active = autocomplete.open
         if (autocomplete_was_active){
@@ -859,7 +858,7 @@ export class ScriptBody extends Body{
     }
 
     make_line(txt: string, compact?: boolean): HTMLElement {
-        const ret = super.make_line(txt)
+        const ret = super.make_line(txt,compact)
         console.log( tokenize_code(txt) );
         return ret
     }

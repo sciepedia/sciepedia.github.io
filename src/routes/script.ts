@@ -100,6 +100,5 @@ export function tokenize_code(code:string){
     }catch(e){
         console.log(e);
         return []
-        
     }
 }
