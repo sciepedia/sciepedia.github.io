@@ -6,7 +6,7 @@ import { is_link } from "./util";
 import { is_online } from "./store";
 
 export type uuid = `${string}-${string}-${string}-${string}-${string}`
-export type language = 'txt' | 'js' | 'csv'
+export type language = 'txt' | 'js' | 'py' | 'csv'
 export type NoteData = {Path:PathData, Content:string, language?:language, comments?:uuid[], id:uuid, comment_of?:uuid}
 
 export let store = {

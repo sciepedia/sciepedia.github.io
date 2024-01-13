@@ -1,5 +1,5 @@
 
-import {root, setCaret, title_list} from "./note"
+import {PythonNote, root, setCaret, title_list} from "./note"
 
 import {Note,Body} from "./note"
 
@@ -7,6 +7,7 @@ import { add_title_completion } from "./autocomplete"
 import { username } from "./store"
 import { get } from "svelte/store"
 import { ScriptNote } from "./note"
+// import { PythonNote } from "./script_python"
 
 export let link_repo = new Map<string,Link>()
 let link_counter = 0
@@ -104,6 +105,8 @@ export class Link {
 
         if (this.path.location.includes("js")){
             this.childnote = new ScriptNote(this.name, this.path,this,call_hist)
+        }else if (this.path.location.includes("py")){
+            this.childnote = new PythonNote(this.name,this.path,this, call_hist)
         }else{
             this.childnote = new Note(this.name, this.path,this,call_hist)
         }

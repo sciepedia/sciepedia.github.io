@@ -1,7 +1,7 @@
 import { is_http_link, is_link, make_http_link, cleanMarkup, is_youtube_link, make_youtube_player } from "./util"
 import { Link, get_link, get_path_data, is_link_element, is_typo_element, type PathData } from "./link"
 import { Image, image_from_file } from "./image"
-import { store, type NoteData, type uuid } from "./data_store"
+import { store, type NoteData, type uuid, type language } from "./data_store"
 
 import { rename_note } from "./renamer"
 import { Autocomplete, add_title_completion } from "./autocomplete"
@@ -19,6 +19,8 @@ export var title_list:{element:HTMLElement,fullpath:PathData}[] = []
 export var root = {path:"_home:"+get(username)}
 export let autocomplete = new Autocomplete()
 
+import "./script_python"
+import { run_python_code } from "./script_python"
 
 let hist: PathData[] = []
 
@@ -40,7 +42,7 @@ export class Note {
     body : Body
     data : NoteData
 
-    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = [], BodyType = Body){        
+    public constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = [], BodyType = Body){        
 
         if (path==undefined){
             path = get_path_data(title)
@@ -859,6 +861,7 @@ export class ScriptBody extends Body{
 
     make_line(txt: string, compact?: boolean): HTMLElement {
         const ret = super.make_line(txt,compact)
+
         console.log( tokenize_code(txt) );
         return ret
     }
@@ -1201,6 +1204,72 @@ export class ScriptNote extends Note{
     }
 }
 
+export class PythonNote extends Note{
+
+    language:language = "py"
+    outfield:HTMLDivElement
+
+    
+    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){        
+        super(title,path, creator,call_hist,Body)
+
+        this.data.language = "py"
+
+        this.body.content.classList.add("js")
+        this.outfield = document.createElement("div")
+
+
+        if (this.data.Path.location[this.data.Path.location.length-1]=="py"){
+
+            const runbutton = document.createElement("div")
+            runbutton.innerHTML = "▶"
+            runbutton.classList.add("runbutton")
+
+            const preprun = ()=>{
+                function deepsave(b:Body){
+                    if (b.saves_pending) b.save()
+                    b.get_links().forEach(l=>{
+                        if (l.is_open && l.childnote){
+                            deepsave(l.childnote.body)
+                        }
+                    })
+                }
+                deepsave(this.body)
+                runbutton.innerHTML = "O"
+                this.outfield!.innerHTML = ""
+
+            }
+            const execute = ()=>{
+                this.execute_script(this.body)
+                runbutton.innerHTML = "▶"
+            }
+            
+            runbutton.addEventListener("mousedown", preprun)
+            runbutton.addEventListener("click", execute)
+            this.body.content.addEventListener("keydown",  (e:KeyboardEvent)=>{
+                if (e.key == "Enter" && e.ctrlKey){
+                    preprun()
+                    execute()
+                }
+            })
+            this.body.element.appendChild(runbutton)
+            this.outfield.classList.add("content")
+            this.outfield.classList.add("js")
+            this.body.element.appendChild(this.outfield)
+        }
+
+
+    }
+
+    async execute_script(body:Body){
+        let content = this.body.get_content_text()
+        content = content.replaceAll(" ", " ")
+        console.log(content);
+        
+        let res = await run_python_code(content)
+        this.outfield.append(String(res))
+    }
+}
 
 class TableBody extends Body{
 
