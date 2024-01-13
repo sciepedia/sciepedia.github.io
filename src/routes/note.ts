@@ -942,11 +942,13 @@ export class ScriptNote extends Note{
     }
 
     async get_flat_text(rawtext:string, body:Body):Promise<[string,[string,Link][]]>{
+
+        rawtext = rawtext.replaceAll(/print\s*\(/g, `print(`)
         const lines = rawtext.split("\n")
         let links:[string, Link][] = []
         let lns = (await Promise.all(lines.map(async (line,lineidx)=>{
 
-            if (/print[ ]*\(/.test(line)){
+            if (/print\s*\(/.test(line)){
 
                 line = line.replaceAll(/print\s*\(/g, `print('${body.owner.data.Path.tostring()}:${lineidx+1}',`)
             }
