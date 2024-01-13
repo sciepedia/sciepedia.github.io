@@ -37,13 +37,13 @@
             neterror = error.message
         }else{
             userid = user!.id
-        }
-        $username = await get_user_name(userid!)
-
-        if (!$username){
-            pick_username = true
-        }else{   
-            window.location.pathname = "/"
+            $username = await get_user_name(userid!)
+            
+            if (!$username){
+                pick_username = true
+            }else{   
+                window.location.pathname = "/"
+            }
         }
     }
 

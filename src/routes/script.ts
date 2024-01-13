@@ -2,16 +2,14 @@
 import * as esprima from  "esprima"
 
 
-export function can_preview_code(code:string){
+export function preview_code(code:string){
 
-
-
-    // esprima.Syntax.ArrayExpression
     function can_preview_expression(expression:any){
         if (["MemberExpression","Literal","Identifier"].includes(expression.type)) return true
         console.log(expression.type);
-        
-        if (expression.type == "BinaryExpression"){
+        if (expression.type == "UnaryExpression"){
+            if (can_preview_expression(expression.argument)) return true
+        }else if (expression.type == "BinaryExpression"){
             if (can_preview_expression(expression.left) && can_preview_expression(expression.right)){
                 return true
             }
@@ -50,28 +48,24 @@ export function can_preview_code(code:string){
         console.log("cant preview",expression );
         return false
     }
-    try{ 
-        let statement = esprima.parseScript(code).body[0]
+    try{    
+        let body = esprima.parseScript(code, {range:true}).body
+
+        let statement = body[body.length-1]
+        code = code.slice (...statement.range!)
         if (statement.type == "ExpressionStatement"){
-            return can_preview_expression(statement.expression)
-        }
-        console.log(statement);
+            if (!can_preview_expression(statement.expression)) return ""
+        }else return false
     }catch(e){
-        console.log(e);   
+        console.log(e);
+        return ""
     }
-    return false
-}
-
-
-export function preview_code(code:string){
     try{
-
-        if (can_preview_code(code)){
-            let fn = Function(`return ${code}`)
-            return fn()
-        }
-    }catch{}
-    return ""
+        let fn = Function(`return ${code}`)
+        return fn()
+    }catch{
+        return ""
+    }
 }
 
 
@@ -98,4 +92,14 @@ export function wrap_code_function(code:string){
     console.log(asyncContent);
     
     return asyncContent
+}
+
+export function tokenize_code(code:string){
+    try{
+        return esprima.tokenize(code)
+    }catch(e){
+        console.log(e);
+        return []
+        
+    }
 }

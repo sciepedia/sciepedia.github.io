@@ -13,7 +13,7 @@ import * as eslint from "eslint-linter-browserify";
 import { get } from "svelte/store"
 import { CommentSection, type CommentElement } from "./comments"
 import { exclude_internal_props } from "svelte/internal"
-import { can_preview_code, preview_code, wrap_code_function } from "./script"
+import { preview_code, tokenize_code, wrap_code_function } from "./script"
 
 export var title_list:{element:HTMLElement,fullpath:PathData}[] = [] 
 export var root = {path:"_home:"+get(username)}
@@ -858,6 +858,12 @@ export class ScriptBody extends Body{
         super.save()
     }
 
+    make_line(txt: string, compact?: boolean): HTMLElement {
+        const ret = super.make_line(txt)
+        console.log( tokenize_code(txt) );
+        return ret
+    }
+
 }
 
 
@@ -930,7 +936,7 @@ export class ScriptNote extends Note{
 
             let text = this.body.get_line_text(focusline as HTMLParagraphElement)
             let prev = preview_code(text)
-            if (prev) this.previewfield.textContent = String(prev)            
+            if (prev != undefined) this.previewfield.textContent = String(prev)            
             else{this.previewfield.textContent = ""}
         })
     }
@@ -942,7 +948,7 @@ export class ScriptNote extends Note{
 
             if (/print[ ]*\(/.test(line)){
 
-                line = line.replaceAll(/print[ ]*\(/g, `print('${body.owner.data.Path.tostring()}:${lineidx+1}',`)
+                line = line.replaceAll(/print\s*\(/g, `print('${body.owner.data.Path.tostring()}:${lineidx+1}',`)
             }
 
             if (line.trimStart().startsWith("//")) return
