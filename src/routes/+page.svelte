@@ -6,11 +6,12 @@
 
     import {tick} from "svelte"
     
-    import { Note, ScriptNote, make_editable,title_list } from "./note";
-    import { setup_autocomplete } from "./autocomplete";
-    import { setup_spellcheck } from "./spellchecker";
-    import { is_link } from "./util"
-    import { store } from "./data_store"
+    import {Note } from "./newView/note"
+    import {make_editable} from "./newView/content"
+    // import { setup_autocomplete } from "./controller/autocomplete";
+    // import { setup_spellcheck } from "./controller/spellchecker";
+    import { is_link } from "./controller/util"
+    import { store } from "./model/data_store"
 
     if (browser){
         document.title = window.location.hostname
@@ -45,16 +46,20 @@ If you want to learn more, check out: #sciepedia:kormann
 `
 
     let page:HTMLDivElement
-    import {root} from "./note"
-    import { is_online, lightmode, pwdhash, username } from "./store";
-    import { PathData, get_path_data } from "./link";
-    import Searchbar from "./searchbar.svelte";
+    // import {root} from "./view/note"
+
+    import { is_online, lightmode, pwdhash, username } from "./model/store";
+    import { PathData, get_path_data } from "./model/data_store";
+    import Searchbar from "./view/searchbar.svelte";
     let hist: PathData[]
     let logged_in_prefix = $username[0]
 
+    let root = {path:"_home:"+$username}
+
+
     async function setup(){
 
-        setup_autocomplete()
+        // setup_autocomplete()
 
         window.fetch = data.fetch
 
@@ -87,20 +92,20 @@ If you want to learn more, check out: #sciepedia:kormann
         }
 
         page = document.querySelector("#page") as HTMLDivElement
-        window.addEventListener("scroll",e=>{
+        // window.addEventListener("scroll",e=>{
 
-            fulltitle = homebutton
-            let top_input = {element:{offsetTop:0},fullpath:"<span id=homebtn>sciepedia</span>"}
-            title_list.forEach(tle=>{
+        //     fulltitle = homebutton
+        //     let top_input = {element:{offsetTop:0},fullpath:"<span id=homebtn>sciepedia</span>"}
+        //     title_list.forEach(tle=>{
 
-                if (window.scrollY + tle.element.offsetHeight > tle.element.offsetTop){
-                    if (top_input.element.offsetTop < tle.element.offsetTop){
-                        // top_input = tle
-                    }
-                }
-            })
+        //         if (window.scrollY + tle.element.offsetHeight > tle.element.offsetTop){
+        //             if (top_input.element.offsetTop < tle.element.offsetTop){
+        //                 // top_input = tle
+        //             }
+        //         }
+        //     })
 
-        })
+        // })
         const tut_path = get_path_data('_tutorial:'+ $username)
         if (!store.has(tut_path)){
             store.setitem({Path:tut_path,Content:tutorial_text.replace("{}",window.location.origin),id:crypto.randomUUID()})
@@ -112,30 +117,24 @@ If you want to learn more, check out: #sciepedia:kormann
             localStorage[JSON.stringify(data.Path)] = JSON.stringify(data)
         }
         
-        let home = new Note("_home",home_path)
-        if (home_path.location.includes("js")){
-            home = new ScriptNote("_home",home_path)
-        }
+        let home = new Note(home_path)
 
-        title_list.push({element:home.head.title_element,fullpath:home_path})
+        // title_list.push({element:home.head.title_element,fullpath:home_path})
 
         page.appendChild(home.element)
 
         document.body.addEventListener("click", e => {
             if(e.target == document.body){
-                make_editable(null)
+                make_editable (null)
             }
         })
 
         window.addEventListener("onunload",_=>{
             localStorage.unloading = true
-            home.body.free()
+            home.remove()
             localStorage.unloaded = true
         })
 
-        setup_spellcheck().then(()=>{
-            home.body.spellcheck()
-        })
     }
 
 

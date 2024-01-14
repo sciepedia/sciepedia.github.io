@@ -1,26 +1,24 @@
-import { is_http_link, is_link, make_http_link, cleanMarkup, is_youtube_link, make_youtube_player } from "./util"
+import { is_http_link, is_link, make_http_link, cleanMarkup, is_youtube_link, make_youtube_player } from "../controller/util"
 import { Link, get_link, get_path_data, is_link_element, is_typo_element, type PathData } from "./link"
 import { Image, image_from_file } from "./image"
-import { store, type NoteData, type uuid, type language } from "./data_store"
+import { store, type NoteData, type uuid, type language } from "../model/data_store"
 
 import { rename_note } from "./renamer"
-import { Autocomplete, add_title_completion } from "./autocomplete"
-import { code_element, typo_element } from "./spellchecker"
-import { username } from "./store"
+import { add_title_completion } from "../controller/autocomplete"
+import { code_element, typo_element } from "../controller/spellchecker"
+import { username } from "../model/store"
 
 import * as eslint from "eslint-linter-browserify";
 
 import { get } from "svelte/store"
 import { CommentSection, type CommentElement } from "./comments"
-import { exclude_internal_props } from "svelte/internal"
+
 import { preview_code, tokenize_code, wrap_code_function } from "./script"
+import type { PythonBody } from "./script_python"
 
 export var title_list:{element:HTMLElement,fullpath:PathData}[] = [] 
 export var root = {path:"_home:"+get(username)}
-export let autocomplete = new Autocomplete()
-
-import "./script_python"
-import { python_element, run_python_code } from "./script_python"
+// export let autocomplete = new Autocomplete()
 
 let hist: PathData[] = []
 
@@ -39,10 +37,10 @@ export class Note {
     element:HTMLDivElement
 
     head : Head
-    body : Body
+    body : TextBody
     data : NoteData
 
-    public constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = [], BodyType = Body){        
+    public constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){        
 
         if (path==undefined){
             path = get_path_data(title)
@@ -55,10 +53,13 @@ export class Note {
         })
 
         this.data = content
+        let BodyType = TextBody
         if (path.location.includes("js")){
             this.data.language = "js"
+            BodyType = ScriptBody
         }else if(path.location.includes("py")){
             this.data.language = "py"
+            BodyType = PythonBody
         }else if(path.location[path.location.length-1] == "csv"){
             this.data.language = "csv"
             BodyType = TableBody
@@ -265,9 +266,9 @@ export class Head {
     }
 }
 
-var last_editable : Body | null = null
+var last_editable : TextBody | null = null
 
-export function make_editable (target:Body|null){
+export function make_editable (target:TextBody|null){
 
     if (target == last_editable){
         return
@@ -283,7 +284,7 @@ export function make_editable (target:Body|null){
     last_editable = target
 }
 
-export class Body {
+export class TextBody {
     
     element : HTMLDivElement
     content : HTMLDivElement
@@ -545,9 +546,9 @@ export class Body {
                 }else if (this.owner.data.language == "js"){
                     const ret = code_element(w)
                     nodes.push(ret)
-                }else if(this.owner.data.language == "py"){
-                    const ret = python_element(w)
-                    nodes.push(ret)
+                // }else if(this.owner.data.language == "py"){
+                //     const ret = python_element(w)
+                //     nodes.push(ret)
                 }else{
                     nodes.push(new Text(w))
                 }
@@ -858,37 +859,13 @@ export function setCaret(node:Node,offset:number) {
 export type scriptLanguage = "js" | 'py'
 
 
-export class ScriptBody extends Body{
-    
-    save(){
-        console.log("saving script")
-        super.save()
-    }
+export class ScriptBody extends TextBody{
 
-    make_line(txt: string, compact?: boolean): HTMLElement {
-        const ret = super.make_line(txt,compact)
-
-        // console.log( tokenize_code(txt) );
-        return ret
-    }
-
-}
+    constructor(txt:string,owner:Note|CommentElement,content:NoteData,call_hist:string[] = []){
+        super(txt,owner, content, call_hist)
 
 
-export class ScriptNote extends Note{
-
-    language:scriptLanguage
-    outfield:HTMLDivElement
-    previewfield:HTMLDivElement
-
-    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){        
-
-
-        super(title,path, creator,call_hist,ScriptBody)
-        this.language = "js"
-        this.data.language = this.language
-
-        this.body.content.classList.add("js")
+        this.content.classList.add("js")
         this.outfield = document.createElement("div")
         this.previewfield = document.createElement("p")
         this.body.element.appendChild(this.previewfield)
@@ -902,7 +879,7 @@ export class ScriptNote extends Note{
             runbutton.classList.add("runbutton")
 
             const preprun = ()=>{
-                function deepsave(b:Body){
+                function deepsave(b:TextBody){
                     if (b.saves_pending) b.save()
                     b.get_links().forEach(l=>{
                         if (l.is_open && l.childnote){
@@ -947,346 +924,295 @@ export class ScriptNote extends Note{
             if (prev != undefined) this.previewfield.textContent = String(prev)            
             else{this.previewfield.textContent = ""}
         })
+
     }
-
-    async get_flat_text(rawtext:string, body:Body):Promise<[string,[string,Link][]]>{
-
-        rawtext = rawtext.replaceAll(/print\s*\(/g, `print(`)
-        const lines = rawtext.split("\n")
-        let links:[string, Link][] = []
-        let lns = (await Promise.all(lines.map(async (line,lineidx)=>{
-
-            if (/print\s*\(/.test(line)){
-
-                line = line.replaceAll(/print\s*\(/g, `print('${body.owner.data.Path.tostring()}:${lineidx+1}',`)
-            }
-
-            if (line.trimStart().startsWith("//")) return
-
-            let words = line.split(/([\s+[\]{}(),])/);
-
-            return (await Promise.all(words.map(async (word,i)=>{
-                
-                if (is_link(word) && (!word.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
-
-                    const L = new Link(word, body, true)
-                    const pstring = L.path.tostring().replaceAll(".", "$").replaceAll(":", "$$$$").replace("#","")
-                    links.push([pstring,L])
-                    return pstring
-                }
-                
-                return word
-            }))).join("")
-        }))).filter(l=>!l?.startsWith("//")).join("\n")
-        return [lns, links]
-    }
-
-    async get_content_text(body:Body, path:PathData, predefs: {vars:Set<string>, values: Array<[string,string]>}){
-
-        const dat = (await store.getitemblocking(path)).Content
-
-        let [txt,lnks] = await this.get_flat_text(dat,body)
-
-        for (let [pstring, L]  of lnks){
-            if (!predefs.vars.has(pstring)){
-                predefs.vars.add(pstring)
-                const nt = new Note(L.name, L.path,L,[])
-                const link_content = await this.get_content_text(nt.body, L.path, predefs)
-                predefs.values.push([pstring, link_content])
-            }
-        }
-
-        return txt
-    }
-
-    async execute_script(body:Body){
-
-        this.outfield.innerHTML = ""
-        const predefs = {vars:new Set<string>,values:new Array<[string,string]>}
-        let content = await this.get_content_text(body, body.owner.data.Path, predefs)
-
-        console.log(content);
-
-        const pref:string[] = []
-        let linecount = 0
-        let functdict:Map<string,number>  = new Map()
-
-        predefs.values.forEach(i=>{
-            const newlines = i[1].match(/\n/g)?.length ?? 0
-            pref.push(`${i[0]} = ${i[1]}`)
-            functdict.set(i[0], linecount)
-            linecount += newlines + 1
-        })
-
-        content = "\n" +pref.join("\n") + "\n" + content
-
-        window.print = ((link:string,...a:any[])=>{
-            let sp = document.createElement("span")
-            sp.textContent = link
-            let lk = new Link(link, this.body,true)
-            this.print(lk.element, ...a)
-        }) as ()=>void
-
-        (window as any).putout = ((element:any)=>{this.outfield.append(element)})
-        try {
-            // const asyncContent = `return async function(){${content}}`
-            // console.log(asyncContent);
-
-            const EXECUTOR = Function(wrap_code_function(content))()
-            let res = await EXECUTOR()
-            if (res != undefined) this.print (undefined,res)
-        } catch (error) {
-
-            console.log(error);
-            
-            let stack = (error as Error).stack?.split("\n");
-            console.log(stack?.join("\n"));
-
-            if (stack && stack[0].startsWith("SyntaxError")){
-                console.log("SYNTAXERROR");
-
-                let messages = lint(content)
-                console.log(messages);
-            }
-            
-            this.print(undefined, "\ ")
-            this.print(undefined, stack![0])
-            stack?.slice(1,-2).forEach(l=>{
-
-                if (l.startsWith("    at ")){
-                    console.log(l);
-                    
-                    let loc = l.slice(7).split(" ",2)[0]
-                    loc = loc.split(".")[0]
-                    let lnum = l.split("<anonymous>:")[1].slice(0,-1)
-                    let linenum = Number(lnum.split(":")[0]) - 3 - functdict.get(loc)!
-
-                    if (isNaN(linenum)){
-                        let linenum = Number(lnum.split(":")[0])-3
-                        {// get func of global line
-                            let res = null
-                            for (let [k,v] of functdict){
-                                if (v>linenum)break
-                                res = [k,v]
-                            }
-                            loc = res![0] as string
-                            linenum = linenum - (res![1] as number)
-                        }
-                        // l = String(linenum) +   content.split("\n")[linenum]
-                        l =  "at #" + loc.replace("$$",":").replaceAll("$", ".") + ":" +  linenum
-                    }else{
-                        l =  "at #" + loc.replace("$$",":").replaceAll("$", ".") + ":" +  linenum
-                    }
-                    this.outfield.appendChild(this.body.make_line(l))
-                }else{
-                    this.print(undefined, l)
-                }
-            })
-            if (stack){
-                let l = stack[stack?.length-2]
-                console.log(linecount);
-                
-                let lnum = Number(l.split("<anonymous>:")[1].slice(0,-1).split(":")[0])-linecount - 3
-                console.log(lnum)
-                this.outfield.appendChild(this.body.make_line("at "+ this.data.Path.tostring() + ":" +lnum))
-            }
-        }
-    }
-
-    save(){
-        let txt = this.body.get_content_text();
-
-        (async ()=>{
-            this.body.content.querySelectorAll(".lintingmessage").forEach(m=>m.remove())
-            
-            let [flat,links] = await this.get_flat_text(txt,this.body)
-
-            if (flat.startsWith("class")){
-                flat = "_x_ = " + flat 
-            }
-            let messages = lint(flat)
-            messages.forEach(m=>{
-                let p = this.body.content.childNodes[m.line-1]
-                let errormessage = document.createElement("p")
-                errormessage.textContent = m.message
-                errormessage.style.color = "red"
-                errormessage.style.fontStyle = "italic"
-                errormessage.classList.add("lintingmessage")
-
-                p.appendChild(errormessage)
-            })
-        })()
-        this.data.Content = txt
-        store.setitem(this.data);
-    }
-
-    print(link?:HTMLElement, ...texts:any[]){
-
-
-        const p = document.createElement("p")
-
-        let is_simple = (t:any)=> ["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null
-
-        function parse(t:any):HTMLElement{
-
-            let sp = document.createElement("span")
-            let tag = t.constructor.name
-            if (is_simple(t)){
-
-                if ( ["number", "boolean"].includes(typeof t)) {
-                    sp.style.color = "orange"
-                }
-                let st = String(t)
-                sp.textContent = st
-
-            }else{
-
-                tag += ` [${Object.keys(t).length}]`
-                sp.style.color = "var(--blue)"
-                sp.style.cursor = "pointer"
-
-                let isopen = false
-                let p : HTMLParagraphElement | undefined
-
-                function open(){
-                    isopen = true
-                    p = document.createElement("p")
-                    p.style.paddingLeft = "2em"
-                    console.log("click");
-                    sp.append(p)
-                    for (let key of Object.keys(t)){
-                        p.append(key, ": ")
-                        p.append(parse(t[key]))
-                        p.append(document.createElement("br"))
-                    }
-                }
-                sp.addEventListener('click',(e)=>{
-                    if (e.target != sp) return
-                    if (isopen){
-                        p?.remove()
-                        isopen = false
-                        return
-                    }
-                    open()
-                })
-
-                let previtems = []
-                for (let key of Object.keys(t)){
-                    if (previtems.length>3){
-                        previtems.push("...")
-                        break
-                    }
-                    let newitem = ""
-                    if (!(t instanceof Array)){
-                        newitem += key + ": "
-                    }
-                    newitem  += t[key]
-                    previtems.push(newitem)
-                }
-
-                let preview = document.createElement("span")
-                preview.textContent = previtems.join(", ")
-                preview.style.color = "var(--color)"
-
-                sp.textContent = tag + " "
-                sp.append(preview)
-
-            }
-            return sp
-        }
-
-        if (link){
-            console.log(link);
-            
-            link.style.float = "right"
-            p.appendChild(link)
-        }
-
-        let el = document.createElement("span")
-        el.append(...texts.map(parse))
-        p.appendChild(el)
-        
-        this.outfield.appendChild(p)
-    }
-}
-
-
-
-export class PythonNote extends ScriptNote{
-
-    // language:language = "py"
-    outfield:HTMLDivElement
 
     
-    constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){        
-        super(title,path, creator,call_hist)
-        this.language = "py"
-        this.data.language = "py"
 
-        this.body.content.classList.add("js")
-        this.outfield = document.createElement("div")
-
-
-        if (this.data.Path.location[this.data.Path.location.length-1]=="py"){
-
-            const runbutton = document.createElement("div")
-            runbutton.innerHTML = "▶"
-            runbutton.classList.add("runbutton")
-
-            const preprun = ()=>{
-                function deepsave(b:Body){
-                    if (b.saves_pending) b.save()
-                    b.get_links().forEach(l=>{
-                        if (l.is_open && l.childnote){
-                            deepsave(l.childnote.body)
-                        }
-                    })
-                }
-                deepsave(this.body)
-                runbutton.innerHTML = "O"
-                this.outfield!.innerHTML = ""
-
-            }
-            const execute = ()=>{
-                this.execute_script(this.body)
-                runbutton.innerHTML = "▶"
-            }
-            
-            runbutton.addEventListener("mousedown", preprun)
-            runbutton.addEventListener("click", execute)
-            this.body.content.addEventListener("keydown",  (e:KeyboardEvent)=>{
-                if (e.key == "Enter" && e.ctrlKey){
-                    preprun()
-                    execute()
-                }
-            })
-            this.body.element.appendChild(runbutton)
-            this.outfield.classList.add("content")
-            this.outfield.classList.add("js")
-            this.body.element.appendChild(this.outfield)
-        }
-
+    save(){
+        console.log("saving script")
+        super.save()
     }
 
-    async execute_script(body:Body){
-        const predefs = {vars:new Set<string>,values:new Array<[string,string]>}
-        let content = await this.get_content_text(body, body.owner.data.Path, predefs)
-        
-        content = content.replaceAll(" ", " ")
-        console.log(content);
-        
-        let res = await run_python_code(content)
-        this.outfield.append(String(res))
+    make_line(txt: string, compact?: boolean): HTMLElement {
+        const ret = super.make_line(txt,compact)
+
+        // console.log( tokenize_code(txt) );
+        return ret
     }
 
-    save(): void {
-        let txt = this.body.get_content_text();
-        this.data.Content = txt
-        store.setitem(this.data)
-    }
 }
 
-class TableBody extends Body{
+
+// export class ScriptNote extends Note{
+
+//     language:scriptLanguage
+//     outfield:HTMLDivElement
+//     previewfield:HTMLDivElement
+
+
+//     async get_flat_text(rawtext:string, body:TextBody):Promise<[string,[string,Link][]]>{
+
+//         rawtext = rawtext.replaceAll(/print\s*\(/g, `print(`)
+//         const lines = rawtext.split("\n")
+//         let links:[string, Link][] = []
+//         let lns = (await Promise.all(lines.map(async (line,lineidx)=>{
+
+//             if (/print\s*\(/.test(line)){
+
+//                 line = line.replaceAll(/print\s*\(/g, `print('${body.owner.data.Path.tostring()}:${lineidx+1}',`)
+//             }
+
+//             if (line.trimStart().startsWith("//")) return
+
+//             let words = line.split(/([\s+[\]{}(),])/);
+
+//             return (await Promise.all(words.map(async (word,i)=>{
+                
+//                 if (is_link(word) && (!word.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
+
+//                     const L = new Link(word, body, true)
+//                     const pstring = L.path.tostring().replaceAll(".", "$").replaceAll(":", "$$$$").replace("#","")
+//                     links.push([pstring,L])
+//                     return pstring
+//                 }
+                
+//                 return word
+//             }))).join("")
+//         }))).filter(l=>!l?.startsWith("//")).join("\n")
+//         return [lns, links]
+//     }
+
+//     async get_content_text(body:TextBody, path:PathData, predefs: {vars:Set<string>, values: Array<[string,string]>}){
+
+//         const dat = (await store.getitemblocking(path)).Content
+
+//         let [txt,lnks] = await this.get_flat_text(dat,body)
+
+//         for (let [pstring, L]  of lnks){
+//             if (!predefs.vars.has(pstring)){
+//                 predefs.vars.add(pstring)
+//                 const nt = new Note(L.name, L.path,L,[])
+//                 const link_content = await this.get_content_text(nt.body, L.path, predefs)
+//                 predefs.values.push([pstring, link_content])
+//             }
+//         }
+
+//         return txt
+//     }
+
+//     async execute_script(body:TextBody){
+
+//         this.outfield.innerHTML = ""
+//         const predefs = {vars:new Set<string>,values:new Array<[string,string]>}
+//         let content = await this.get_content_text(body, body.owner.data.Path, predefs)
+
+//         console.log(content);
+
+//         const pref:string[] = []
+//         let linecount = 0
+//         let functdict:Map<string,number>  = new Map()
+
+//         predefs.values.forEach(i=>{
+//             const newlines = i[1].match(/\n/g)?.length ?? 0
+//             pref.push(`${i[0]} = ${i[1]}`)
+//             functdict.set(i[0], linecount)
+//             linecount += newlines + 1
+//         })
+
+//         content = "\n" +pref.join("\n") + "\n" + content
+
+//         window.print = ((link:string,...a:any[])=>{
+//             let sp = document.createElement("span")
+//             sp.textContent = link
+//             let lk = new Link(link, this.body,true)
+//             this.print(lk.element, ...a)
+//         }) as ()=>void
+
+//         (window as any).putout = ((element:any)=>{this.outfield.append(element)})
+//         try {
+//             // const asyncContent = `return async function(){${content}}`
+//             // console.log(asyncContent);
+
+//             const EXECUTOR = Function(wrap_code_function(content))()
+//             let res = await EXECUTOR()
+//             if (res != undefined) this.print (undefined,res)
+//         } catch (error) {
+
+//             console.log(error);
+            
+//             let stack = (error as Error).stack?.split("\n");
+//             console.log(stack?.join("\n"));
+
+//             if (stack && stack[0].startsWith("SyntaxError")){
+//                 console.log("SYNTAXERROR");
+
+//                 let messages = lint(content)
+//                 console.log(messages);
+//             }
+            
+//             this.print(undefined, "\ ")
+//             this.print(undefined, stack![0])
+//             stack?.slice(1,-2).forEach(l=>{
+
+//                 if (l.startsWith("    at ")){
+//                     console.log(l);
+                    
+//                     let loc = l.slice(7).split(" ",2)[0]
+//                     loc = loc.split(".")[0]
+//                     let lnum = l.split("<anonymous>:")[1].slice(0,-1)
+//                     let linenum = Number(lnum.split(":")[0]) - 3 - functdict.get(loc)!
+
+//                     if (isNaN(linenum)){
+//                         let linenum = Number(lnum.split(":")[0])-3
+//                         {// get func of global line
+//                             let res = null
+//                             for (let [k,v] of functdict){
+//                                 if (v>linenum)break
+//                                 res = [k,v]
+//                             }
+//                             loc = res![0] as string
+//                             linenum = linenum - (res![1] as number)
+//                         }
+//                         // l = String(linenum) +   content.split("\n")[linenum]
+//                         l =  "at #" + loc.replace("$$",":").replaceAll("$", ".") + ":" +  linenum
+//                     }else{
+//                         l =  "at #" + loc.replace("$$",":").replaceAll("$", ".") + ":" +  linenum
+//                     }
+//                     this.outfield.appendChild(this.body.make_line(l))
+//                 }else{
+//                     this.print(undefined, l)
+//                 }
+//             })
+//             if (stack){
+//                 let l = stack[stack?.length-2]
+//                 console.log(linecount);
+                
+//                 let lnum = Number(l.split("<anonymous>:")[1].slice(0,-1).split(":")[0])-linecount - 3
+//                 console.log(lnum)
+//                 this.outfield.appendChild(this.body.make_line("at "+ this.data.Path.tostring() + ":" +lnum))
+//             }
+//         }
+//     }
+
+//     save(){
+//         let txt = this.body.get_content_text();
+
+//         (async ()=>{
+//             this.body.content.querySelectorAll(".lintingmessage").forEach(m=>m.remove())
+            
+//             let [flat,links] = await this.get_flat_text(txt,this.body)
+
+//             if (flat.startsWith("class")){
+//                 flat = "_x_ = " + flat 
+//             }
+//             let messages = lint(flat)
+//             messages.forEach(m=>{
+//                 let p = this.body.content.childNodes[m.line-1]
+//                 let errormessage = document.createElement("p")
+//                 errormessage.textContent = m.message
+//                 errormessage.style.color = "red"
+//                 errormessage.style.fontStyle = "italic"
+//                 errormessage.classList.add("lintingmessage")
+
+//                 p.appendChild(errormessage)
+//             })
+//         })()
+//         this.data.Content = txt
+//         store.setitem(this.data);
+//     }
+
+//     print(link?:HTMLElement, ...texts:any[]){
+
+
+//         const p = document.createElement("p")
+
+//         let is_simple = (t:any)=> ["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null
+
+//         function parse(t:any):HTMLElement{
+
+//             let sp = document.createElement("span")
+//             let tag = t.constructor.name
+//             if (is_simple(t)){
+
+//                 if ( ["number", "boolean"].includes(typeof t)) {
+//                     sp.style.color = "orange"
+//                 }
+//                 let st = String(t)
+//                 sp.textContent = st
+
+//             }else{
+
+//                 tag += ` [${Object.keys(t).length}]`
+//                 sp.style.color = "var(--blue)"
+//                 sp.style.cursor = "pointer"
+
+//                 let isopen = false
+//                 let p : HTMLParagraphElement | undefined
+
+//                 function open(){
+//                     isopen = true
+//                     p = document.createElement("p")
+//                     p.style.paddingLeft = "2em"
+//                     console.log("click");
+//                     sp.append(p)
+//                     for (let key of Object.keys(t)){
+//                         p.append(key, ": ")
+//                         p.append(parse(t[key]))
+//                         p.append(document.createElement("br"))
+//                     }
+//                 }
+//                 sp.addEventListener('click',(e)=>{
+//                     if (e.target != sp) return
+//                     if (isopen){
+//                         p?.remove()
+//                         isopen = false
+//                         return
+//                     }
+//                     open()
+//                 })
+
+//                 let previtems = []
+//                 for (let key of Object.keys(t)){
+//                     if (previtems.length>3){
+//                         previtems.push("...")
+//                         break
+//                     }
+//                     let newitem = ""
+//                     if (!(t instanceof Array)){
+//                         newitem += key + ": "
+//                     }
+//                     newitem  += t[key]
+//                     previtems.push(newitem)
+//                 }
+
+//                 let preview = document.createElement("span")
+//                 preview.textContent = previtems.join(", ")
+//                 preview.style.color = "var(--color)"
+
+//                 sp.textContent = tag + " "
+//                 sp.append(preview)
+
+//             }
+//             return sp
+//         }
+
+//         if (link){
+//             console.log(link);
+            
+//             link.style.float = "right"
+//             p.appendChild(link)
+//         }
+
+//         let el = document.createElement("span")
+//         el.append(...texts.map(parse))
+//         p.appendChild(el)
+        
+//         this.outfield.appendChild(p)
+//     }
+// }
+
+class TableBody extends TextBody{
 
     table:HTMLTableElement
     rows:number

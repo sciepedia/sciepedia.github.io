@@ -1,19 +1,111 @@
 
-import { get } from "svelte/store";
+
+import { get } from "svelte/store"
 import {getiditem, getitem,setitem} from "./backend"
-import { PathData, get_path_data } from "./link";
-import { is_link } from "./util";
-import { is_online } from "./store";
+import { username } from "./store"
+
+
 
 export type uuid = `${string}-${string}-${string}-${string}-${string}`
 export type language = 'txt' | 'js' | 'py' | 'csv'
-export type NoteData = {Path:PathData, Content:string, language?:language, comments?:uuid[], id:uuid, comment_of?:uuid}
+export type NoteData = {Path:PathData, Content:string, comments?:uuid[], id:uuid, comment_of?:uuid}
+
+
+
+export function get_path_data(path:string, default_author?:string):PathData{
+
+    if (path.startsWith("@")) path = path.replace("@", "#me:")
+
+    let pub = path.startsWith("#")
+    if (!path.startsWith("#") && !path.startsWith("_")){
+        throw new Error("invalid path: "+path)
+    }
+    path = path.substring(1)
+
+    let author = default_author ?? get(username)
+
+    const location = path.split(".").map(s=>{
+        const su = s.split(":")
+        for (let p of su.slice(1)){
+            if (isNaN(Number(p))) author=p
+        }
+        return su[0]
+    })    
+    return new PathData(pub,author,location)
+}
+
+export class PathData{
+    pub:boolean
+    location:string[]
+    author:string
+
+    constructor(pub:boolean, author: string, location: string[]){
+        this.pub = pub
+        this.author =author
+        this.location = location
+    }
+
+    tostring(){
+        if (this.location.join(".") == "me") return "@"+this.author
+        return (this.pub?"#":"_" )+this.location.join(".")+`:${this.author}`
+    }
+
+    relative_path(parent:PathData){
+        const parent_log_json = JSON.stringify(parent.location)
+        if (parent_log_json == JSON.stringify(this.location.slice(0,parent.location.length))){
+            return new PathData(this.pub, this.author, [""].concat(this.location.slice(parent.location.length)))
+        }else if(parent.location.length > 2 && JSON.stringify(parent.location.slice(0,-1)) == JSON.stringify(this.location.slice(0,parent.location.length))){
+            return new PathData(this.pub,this.author, ["."].concat(this.location.slice(parent.location.length-1)))
+        }
+        return this
+    }
+
+    get_language():language{
+        let res:language = "txt"
+        for (let item of this.location){
+            if (["js","txt","py"].includes(item)){
+                res = item as language
+            }
+        }
+        return res
+    }
+
+    parent(){
+        return this.location.length>1? new PathData(this.pub, this.author,this.location.slice(0,-1)):null
+    }
+
+
+    create_child(title:string){
+
+        if (title.startsWith("@")) return get_path_data(title)
+
+        if (title.endsWith(".") || title.endsWith(":")){
+            title = title.slice(0,-1)
+        }
+        
+        if (title.startsWith("#") || title.startsWith("_")){
+            return get_path_data(title, this.author)
+        }
+        if (title.startsWith("..")){
+            const parent = this.parent()
+            if (parent == null)throw "no parent here for ..path"
+
+            return get_path_data ( parent.tostring()+ title.substring(1), this.author)
+        }
+
+        if (title.startsWith(".")){
+            const ret = get_path_data(this.tostring() + title, this.author)
+            return ret
+        }
+        throw "invalid path: "+title
+    }
+}
 
 export let store = {
 
     getitem : (Path:PathData,callback:(s:NoteData)=>void)=>{
 
-        var res:NoteData = {Path, Content:"…",language:Path.location.slice(-1)[0]=='js'?"js":"txt",id:crypto.randomUUID() as uuid}
+        var res:NoteData = {Path, Content:"…",id:crypto.randomUUID() as uuid}
         const key = JSON.stringify(Path)
 
         if (store.has(Path)){
@@ -37,13 +129,11 @@ export let store = {
         if (res != null){
             res.Path = new PathData(res.Path.pub,res.Path.author,res.Path.location)
         }
-        res.language = Path.location.slice(-1)[0]=='js'?"js":"txt"
-
         return res
     },
 
     getitemblocking : async (Path:PathData)=>{
-        var res:NoteData | null = {Path, Content:"…",language:Path.location.slice(-1)[0]=='js'?"js":"txt",id:crypto.randomUUID() as uuid}
+        var res:NoteData | null = {Path, Content:"…",id:crypto.randomUUID() as uuid}
         const key = JSON.stringify(Path)
 
         if (store.has(Path)){
@@ -66,7 +156,6 @@ export let store = {
 
         if (res != null){
             res.Path = new PathData(res.Path.pub,res.Path.author,res.Path.location)
-            res.language = Path.location.slice(-1)[0]=='js'?"js":"txt"
         }
 
         return res

@@ -1,15 +1,19 @@
-
-import { browser } from "$app/environment";
+import { ScriptContent } from "./script";
 import type {PyodideInterface} from "pyodide"
-import { Body, Note } from "./note";
-import type { Link, PathData } from "./link";
 
 
 let pyo : PyodideInterface | undefined 
 
+let print = (...x:any[])=>console.warn(x)
+
 async function setup_python(){
     await import ("https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js") // @type:ignore
-    pyo = await loadPyodide() as PyodideInterface
+    window.print = (...x:any)=>{}
+    pyo = await loadPyodide({stdout:print}) as PyodideInterface
+
+    // console.log(pyo.setStdout)
+    // pyo.setStdout((...a:any[])=>{console.log("out:",a)})
+
     // await pyo.loadPackage("numpy")
 
 }
@@ -77,3 +81,42 @@ export function python_element(word:string){
     return res
 
 }
+
+
+export class PythonContent extends ScriptContent{
+
+    execute(): void {
+        this.outfield.innerHTML = ""
+        let code = this.get_text()
+
+        print = (...args:any[])=>{            
+            this.print(...args)
+        }
+        code = code.replaceAll(" "," ")
+
+        run_python_code(code).catch(e=>{
+            console.log(e);
+            this.handle_error(e)
+            
+        })
+
+    }
+
+    handle_error(error:Error){
+        let lines = error.stack!.split("\n")
+        console.log(lines);
+        
+        lines.filter(line=>{
+            return line.startsWith('  File "<exec>", line') || (!line.startsWith(" ") && !line.startsWith("PythonError:"))
+        }).map(line=>print(line))
+    }
+
+    on_input(e: Event): void {
+        super.on_input(e)
+    }
+
+    make_word(t: string): Text {
+        return python_element(t)
+    }
+}
+

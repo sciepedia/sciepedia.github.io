@@ -3,9 +3,9 @@
 <script lang='ts'>
 
     import { createClient, type SignUpWithPasswordCredentials} from '@supabase/supabase-js'
-    import { get_user_name, login, register, set_user_name } from '../backend';
-    import { hash, valid_username } from '../util';
-    import { email, pwdhash, username } from '../store';
+    import { get_user_name, login, register, set_user_name } from '../model/backend';
+    import { hash, valid_username } from '../controller/util';
+    import { email, pwdhash, username } from '../model/store';
 
 
     const pub_anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InliZm9jbmJkZHZleXloZml6dmpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYzMzMzMzMsImV4cCI6MjAxMTkwOTMzM30.8YyrLgEjoBRBgs5IG4ekuY8qjqvEnjtviRygTtARIx8"

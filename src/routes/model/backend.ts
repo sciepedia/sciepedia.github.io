@@ -2,10 +2,8 @@ import { createClient, SupabaseClient, type SignUpWithPasswordCredentials } from
 import type { NoteData, uuid } from './data_store';
 import { is_online, pwdhash, userId, username } from './store';
 import { get } from 'svelte/store';
-import { PathData } from './link';
-import { set_store_value } from 'svelte/internal';
-import type { Note } from './note';
-import { valid_username } from './util';
+import { PathData } from './data_store';
+import { valid_username } from '../controller/util';
 
 
 const pub_anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InliZm9jbmJkZHZleXloZml6dmpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYzMzMzMzMsImV4cCI6MjAxMTkwOTMzM30.8YyrLgEjoBRBgs5IG4ekuY8qjqvEnjtviRygTtARIx8"

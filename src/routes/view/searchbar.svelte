@@ -1,0 +1,99 @@
+
+<script lang='ts'>
+    // import { browser } from "$app/environment";
+    // import { tick } from "svelte";
+    // import { get_completions } from "../controller/autocomplete";
+    // import { PathData } from "./link";
+    // import { insert_hydration, prevent_default } from "svelte/internal";
+    // import { search, setup_search, type searchItem } from "../controller/search";
+    // import { store } from "../model/data_store";
+    // import { Note } from "./note";
+
+
+    // let searching:boolean = false
+    // let query:string = ""
+
+    // type restulttype = "page"
+    // let results:searchItem[] = []
+    // let highlight_index = 0
+
+    // let fillsuggestion = ""
+
+
+
+    // if (browser){
+    //     window.addEventListener("keydown",e=>{
+
+    //         if (e.key == "p"){
+    //             if (e.metaKey){
+    //                 e.preventDefault()
+    //                 searching = true
+    //             }
+    //         }else if (e.key == "Escape"){
+    //             searching = false
+    //         }
+    //     })
+    //     window.addEventListener("keyup",(e)=>{
+
+    //         if(!searching){return}
+    //         if (e.key == "Meta" || e.key == "Escape"){
+    //         }else if (e.key=="ArrowUp"){
+    //             highlight_index = Math.max(highlight_index-1,0)
+    //         }else if (e.key=="ArrowDown"){
+    //             highlight_index = Math.min(highlight_index+1,results.length-1)
+    //         }else if (e.key=="Tab"){
+    //             e.preventDefault()
+    //             let tag = results[highlight_index].tags
+                
+    //             if (typeof(tag)=="string" ){
+    //                 tag = tag.split(":")[0]
+    //                 tag = tag.split(".").slice(0,query.split(".").length).join(".")
+    //                 query = tag
+    //                 bar.focus()
+    //             }
+
+    //         }else if (e.key=="Enter"){
+    //             results[highlight_index].executor(query)
+    //         }else{
+    //             if (query == ""){results = []; return}
+    //             highlight_index = 0
+    //             results = search(query)
+    //             if (results.length == 0){
+    //                 results = [
+    //                     {
+    //                         tags: (s)=>true, rep:x=>`⚙️ create Page: ${x}`, executor:(x:string)=>{
+    //                             const nn: Note = new Note("#"+x)
+    //                             store.setitem(nn.data)
+    //                             window.location.search = x
+    //                     }},{
+    //                         tags: s=>true, rep:x=> `⚙️ create secret Page: ${x}`, executor:(x:string)=>{
+    //                             const nn: Note = new Note("_"+x)
+    //                             store.setitem(nn.data)
+    //                             window.location.search = "_"+x
+    //                         }
+    //                     }
+    //                 ]
+    //             }
+    //             let topres = results[0]
+    //         }
+    //     })
+
+    //     window.addEventListener("click",e=>{
+    //         if((e.target as HTMLElement).id == "search_btn"){return}
+    //         searching = false
+    //         searchhint = false
+    //     })
+    // }
+
+    // let bar: HTMLElement
+
+    // $:if (searching){
+    //     setup_search()
+    //     tick().then(()=>{
+    //         bar.focus()
+    //     })
+    // }
+
+    // let searchhint = false
+
+</script>

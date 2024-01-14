@@ -1,4 +1,4 @@
-import type { searchItem, searchResult } from "./search"
+import type { searchItem } from "../controller/search"
 import { openaikey } from "./store"
 
 
