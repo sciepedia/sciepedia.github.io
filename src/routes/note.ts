@@ -20,7 +20,7 @@ export var root = {path:"_home:"+get(username)}
 export let autocomplete = new Autocomplete()
 
 import "./script_python"
-import { run_python_code } from "./script_python"
+import { python_element, run_python_code } from "./script_python"
 
 let hist: PathData[] = []
 
@@ -57,6 +57,8 @@ export class Note {
         this.data = content
         if (path.location.includes("js")){
             this.data.language = "js"
+        }else if(path.location.includes("py")){
+            this.data.language = "py"
         }else if(path.location[path.location.length-1] == "csv"){
             this.data.language = "csv"
             BodyType = TableBody
@@ -499,7 +501,8 @@ export class Body {
     }
 
     make_line(txt:string,compact:boolean=true): HTMLElement{
-
+        console.log(this.owner.data.language, txt);
+        
         if (txt == ""){
             let p = document.createElement("p")
             p.innerHTML = "<br>"
@@ -541,6 +544,9 @@ export class Body {
                     }
                 }else if (this.owner.data.language == "js"){
                     const ret = code_element(w)
+                    nodes.push(ret)
+                }else if(this.owner.data.language == "py"){
+                    const ret = python_element(w)
                     nodes.push(ret)
                 }else{
                     nodes.push(new Text(w))
@@ -849,7 +855,7 @@ export function setCaret(node:Node,offset:number) {
 }
 
 
-export type scriptLanguage = "js" 
+export type scriptLanguage = "js" | 'py'
 
 
 export class ScriptBody extends Body{
@@ -862,7 +868,7 @@ export class ScriptBody extends Body{
     make_line(txt: string, compact?: boolean): HTMLElement {
         const ret = super.make_line(txt,compact)
 
-        console.log( tokenize_code(txt) );
+        // console.log( tokenize_code(txt) );
         return ret
     }
 
@@ -880,7 +886,7 @@ export class ScriptNote extends Note{
 
         super(title,path, creator,call_hist,ScriptBody)
         this.language = "js"
-        this.data.language = "js"
+        this.data.language = this.language
 
         this.body.content.classList.add("js")
         this.outfield = document.createElement("div")
@@ -1204,15 +1210,17 @@ export class ScriptNote extends Note{
     }
 }
 
-export class PythonNote extends Note{
 
-    language:language = "py"
+
+export class PythonNote extends ScriptNote{
+
+    // language:language = "py"
     outfield:HTMLDivElement
 
     
     constructor(title:string, path?:PathData, creator?:Link, call_hist:string[] = []){        
-        super(title,path, creator,call_hist,Body)
-
+        super(title,path, creator,call_hist)
+        this.language = "py"
         this.data.language = "py"
 
         this.body.content.classList.add("js")
@@ -1258,16 +1266,23 @@ export class PythonNote extends Note{
             this.body.element.appendChild(this.outfield)
         }
 
-
     }
 
     async execute_script(body:Body){
-        let content = this.body.get_content_text()
+        const predefs = {vars:new Set<string>,values:new Array<[string,string]>}
+        let content = await this.get_content_text(body, body.owner.data.Path, predefs)
+        
         content = content.replaceAll(" ", " ")
         console.log(content);
         
         let res = await run_python_code(content)
         this.outfield.append(String(res))
+    }
+
+    save(): void {
+        let txt = this.body.get_content_text();
+        this.data.Content = txt
+        store.setitem(this.data)
     }
 }
 
