@@ -95,3 +95,26 @@
     let searchhint = false
 
 </script>
+
+
+
+{#if searchhint}
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <span id = "search_btn" on:click={()=>{searchhint=false;searching=true}}>>> Cmd + P </span> 
+{:else}
+    <button id = "search_btn" on:click={(e)=>{ searchhint = true}} >⚙︎</button>
+{/if}
+
+
+<div class=searchbar hidden={!searching}>
+
+    <p id=searchsuggestion>{fillsuggestion}</p>
+    <input placeholder="search..." bind:this={bar} type="text" bind:value={query}>
+    <div class="results">
+        {#each results as res, i}        
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <p class={i==highlight_index ? "highlighted" : ""} on:click={()=>{res.executor(query)}}> {(typeof(res.rep) == 'string' ? res.rep : res.rep(query)) }</p>
+            <br>
+        {/each}
+    </div>
+</div>

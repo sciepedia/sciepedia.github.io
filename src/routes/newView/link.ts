@@ -1,7 +1,4 @@
 
-
-import { get } from "svelte/store"
-import { username } from "../model/store"
 import type {Note} from "./note"
 import type { PathData } from "../model/data_store"
 
@@ -22,14 +19,22 @@ export class Link{
     open:boolean
     child?:Note
     path:PathData
+    linenumber:number|null = null
 
     constructor(name:string, parent:Note, open = false){
+        if (name.endsWith(".")) name = name.slice(0,-1)
+
+        const splits = name.split(".")
+        for (let item of splits[splits.length-1]){
+            if (/^[0-9]+$/.test(item)) this.linenumber = +item
+        }
 
         this.name = name
         this.parent = parent
         this.element = document.createElement("span")
         this.element.textContent = name
         this.element.classList.add("link")
+        this.element.spellcheck = false
         this.open = open
         this.element.addEventListener("click", ()=>{
             this.set_open(!this.open)
@@ -53,10 +58,16 @@ export class Link{
     set_open(value:boolean){
 
         if (value == this.open) return
+        this.element.classList.toggle("open")
         if (value){
             let line = this.element.parentElement as HTMLParagraphElement
             this.child = this.parent.create_child(this.path,this)
             line.append(this.child!.element)
+
+            if (this.linenumber!=null){
+                let item = this.child.content.element.childNodes.item(this.linenumber-1);
+                (item as HTMLParagraphElement).style.background = "var(--focus)"
+            }
         }else{
             this.child!.remove()
         }

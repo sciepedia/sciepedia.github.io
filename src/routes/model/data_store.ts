@@ -24,13 +24,15 @@ export function get_path_data(path:string, default_author?:string):PathData{
 
     let author = default_author ?? get(username)
 
-    const location = path.split(".").map(s=>{
+    const items = path.split(".")
+    const location = items.map(s=>{
         const su = s.split(":")
         for (let p of su.slice(1)){
             if (isNaN(Number(p))) author=p
         }
         return su[0]
-    })    
+    })
+
     return new PathData(pub,author,location)
 }
 

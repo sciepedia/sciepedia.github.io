@@ -1,26 +1,28 @@
+
 import { ScriptContent } from "./script";
 import type {PyodideInterface} from "pyodide"
 
 
 let pyo : PyodideInterface | undefined 
 
-let print = (...x:any[])=>console.warn(x)
+let active_content: PythonContent|null = null
+let print = (...x:any[])=>{active_content?.print(...x)}
 
 async function setup_python(){
+    console.log("python setup...");
+    print("python setup ...")
+    
     // @ts-ignore
     await import ("https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js")
-    window.print = (...x:any)=>{}
+    // window.print = (...x:any)=>{}
     // @ts-ignore
     pyo = await loadPyodide({stdout:print}) as PyodideInterface
-
-    // console.log(pyo.setStdout)
-    // pyo.setStdout((...a:any[])=>{console.log("out:",a)})
-
-    // await pyo.loadPackage("numpy")
-
+    active_content!.outfield.innerHTML = ""
 }
 
 export async function run_python_code(code : string){
+    console.log("run python");
+    
 
     if (pyo == undefined){
         await setup_python()
@@ -87,21 +89,18 @@ export function python_element(word:string){
 
 export class PythonContent extends ScriptContent{
 
-    execute(): void {
+    async execute() {
         this.outfield.innerHTML = ""
         let code = this.get_text()
-
-        print = (...args:any[])=>{            
-            this.print(...args)
-        }
+        active_content = this
         code = code.replaceAll(" "," ")
 
         run_python_code(code).catch(e=>{
             console.log(e);
             this.handle_error(e)
-            
+        }).then(res=>{
+            print(res)
         })
-
     }
 
     handle_error(error:Error){
@@ -119,6 +118,13 @@ export class PythonContent extends ScriptContent{
 
     make_word(t: string): Text {
         return python_element(t)
+    }
+    print(...args:any[]){
+        let p = document.createElement("p")
+        for (let arg of args){
+            p.textContent += String(arg)
+        }
+        this.outfield.append(p)
     }
 }
 

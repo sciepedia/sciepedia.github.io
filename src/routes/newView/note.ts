@@ -1,6 +1,7 @@
 import { store } from "../model/data_store";
 import type { PathData, language } from "../model/data_store";
 import { TextContent, make_editable } from "./content";
+import {open_context_menu} from "./contextMenu"
 import type { Link } from "./link";
 import { PythonContent } from "./python";
 import { rename_note } from "./renamer";
@@ -78,7 +79,9 @@ export class Head{
     constructor(note:Note,path:PathData){
 
         this.note = note
-        this.element = document.createElement("h2")
+        this.element = document.createElement("div")
+        this.element.classList.add("head")
+        let titleElement = document.createElement("h2")
 
         let title:string
         if (this.note.creator){
@@ -86,10 +89,11 @@ export class Head{
         }else{
             title = path.mini()
         }
-        this.element.textContent = title
+        titleElement.textContent = title
+        this.element.append(titleElement)
         this.note.element.append(this.element)
 
-        this.element.addEventListener("click",()=>{
+        this.element.addEventListener("click",(e)=>{
             rename_note(this.note.content.data.Path).then(newpath=>{
 
                 let item = store.getitem(newpath,newitem=>{
@@ -106,5 +110,10 @@ export class Head{
 
             })
         })
+        this.element.addEventListener("contextmenu",(e)=>{
+            open_context_menu(e,this.note)
+        })
+
+
     }
 }

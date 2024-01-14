@@ -12,6 +12,8 @@
     import { is_link } from "./controller/util"
     import { store } from "./model/data_store"
 
+    import {setup_autocomplete} from "./controller/autocomplete"
+
     if (browser){
         document.title = window.location.hostname
     }
@@ -50,6 +52,7 @@ If you want to learn more, check out: #sciepedia:kormann
     import { is_online, lightmode, pwdhash, username } from "./model/store";
     import { PathData, get_path_data } from "./model/data_store";
     import Searchbar from "./newView/searchbar.svelte";
+
     let hist: PathData[]
     let logged_in_prefix = $username[0]
 
@@ -58,7 +61,7 @@ If you want to learn more, check out: #sciepedia:kormann
 
     async function setup(){
 
-        // setup_autocomplete()
+        setup_autocomplete()
 
         window.fetch = data.fetch
 
