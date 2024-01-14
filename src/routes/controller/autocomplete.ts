@@ -3,43 +3,45 @@
 // import { setCaret } from "../view/note";
 // import { setup_search } from "./search";
 
-// export var title_set = new Map<string,PathData>()
-// var title_list:[string,PathData][] =[]
-// var title_added = false
+import type { PathData } from "../model/data_store"
 
-// export function setup_autocomplete(){
+export var title_set = new Map<string,PathData>()
+var title_list:[string,PathData][] =[]
+var title_added = false
+
+export function setup_autocomplete(){
     
-//     for (let index = 0; index < localStorage.length; index++) {
-//         const key = localStorage.key(index)!
-//         try {
-//             const d = JSON.parse(key)
-//             if (d.location){
-//                 add_title_completion(d)
-//             }
-//         }catch{}
-//     }
-// }
+    for (let index = 0; index < localStorage.length; index++) {
+        const key = localStorage.key(index)!
+        try {
+            const d = JSON.parse(key)
+            if (d.location){
+                add_title_completion(d)
+            }
+        }catch{}
+    }
+}
 
-// export function add_title_completion(path:PathData){
+export function add_title_completion(path:PathData){
 
-//     const pathstring = (path.pub?"":"_") + path.location.join(".")+":"+path.author
+    const pathstring = (path.pub?"":"_") + path.location.join(".")+":"+path.author
     
-//     const size = title_set.size
-//     title_set.set(pathstring,path)
+    const size = title_set.size
+    title_set.set(pathstring,path)
 
-//     if (size != title_set.size){
-//         title_added = true
-//     }
-// }
+    if (size != title_set.size){
+        title_added = true
+    }
+}
 
-// export function updated_title_list(){
-//     if (title_added){        
-//         title_list = Array.from(title_set)
-//         title_list.sort((a,b)=>a[0].localeCompare(b[0]))
-//         title_added = false
-//     }        
-//     return title_list
-// }
+export function updated_title_list(){
+    if (title_added){        
+        title_list = Array.from(title_set)
+        title_list.sort((a,b)=>a[0].localeCompare(b[0]))
+        title_added = false
+    }        
+    return title_list
+}
 
 // export function get_completions(content:string, maxres = 10){
 //     content = content.replaceAll(" ", "_")

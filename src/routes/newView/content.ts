@@ -1,7 +1,9 @@
+import { get } from "svelte/store";
 import { is_link } from "../controller/util";
-import { store, type NoteData } from "../model/data_store";
+import { store, type NoteData, PathData } from "../model/data_store";
 import { Link, get_link } from "./link";
 import type { Note } from "./note";
+import { username } from "../model/store";
 
 
 let last_editable:TextContent | null
@@ -19,13 +21,17 @@ export class TextContent{
     element:HTMLDivElement
     data: NoteData
     saves_pending: boolean
-    constructor(note:Note){
+    constructor(note:Note,path:PathData){
         this.note = note
         this.element = document.createElement("div")
         this.element.classList.add("content")
         note.element.append(this.element)
         this.element.addEventListener("click", (e)=>{
             let target = e.target as HTMLElement
+            if (target.classList.contains("link")){
+                e.preventDefault()
+                return
+            }
             while (target.parentElement && !target.classList.contains("content") && !target.classList.contains("note")){
                 target = target.parentElement
             }
@@ -41,11 +47,11 @@ export class TextContent{
             }
         })
         this.element.addEventListener("input",(e)=>this.on_input(e))
-        this.data = store.getitem(this.note.path,newdata=>{})
+        this.data = store.getitem(path,newdata=>{})
         this.setText(this.data.Content)
         this.saves_pending = false
 
-        let linkstate=  store.get_linkstate(this.note.path)
+        let linkstate=  store.get_linkstate(path)
 
         this.get_links().forEach((link,i)=>{
             if (linkstate[i] && !this.note.call_hist.includes(link.path)){
@@ -115,6 +121,7 @@ export class TextContent{
     }
 
     make_line(txt:string,compact:boolean=true): HTMLElement{
+
         
         if (txt == ""){
             let p = document.createElement("p")
@@ -136,7 +143,8 @@ export class TextContent{
                 try{
                     const link = new Link(w,this.note)
                     nodes.push(link.element)
-                }catch{
+                }catch(e){
+                    console.log("failed link", w,e);
                     nodes.push(this.make_word(w))
                 }
             // }else if(is_http_link(w)){
@@ -286,7 +294,7 @@ export class TextContent{
     save_linkstate(){
         let linkstate:boolean[] = []
         this.get_links().forEach(link=>linkstate.push(link.open))
-        store.set_linkstate(this.note.path,linkstate)
+        store.set_linkstate(this.note.path(),linkstate)
     }
 
     save_lazy(){
@@ -344,6 +352,7 @@ export class TextContent{
     }
 
     set_editable(value:boolean){
+        if (get(username)!=this.data.Path.author) return
         if (value){
             this.element.contentEditable = "true"
             this.element.focus()

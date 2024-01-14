@@ -8,8 +8,7 @@
     
     import {Note } from "./newView/note"
     import {make_editable} from "./newView/content"
-    // import { setup_autocomplete } from "./controller/autocomplete";
-    // import { setup_spellcheck } from "./controller/spellchecker";
+
     import { is_link } from "./controller/util"
     import { store } from "./model/data_store"
 
@@ -50,7 +49,7 @@ If you want to learn more, check out: #sciepedia:kormann
 
     import { is_online, lightmode, pwdhash, username } from "./model/store";
     import { PathData, get_path_data } from "./model/data_store";
-    import Searchbar from "./view/searchbar.svelte";
+    import Searchbar from "./newView/searchbar.svelte";
     let hist: PathData[]
     let logged_in_prefix = $username[0]
 

@@ -1,11 +1,12 @@
 
+import type { PathData } from "../model/data_store";
 import { TextContent } from "./content";
 import type { Note } from "./note";
 
 export class ScriptContent extends TextContent{
     outfield:HTMLDivElement
-    constructor(note:Note){
-        super(note)
+    constructor(note:Note,path:PathData){
+        super(note,path)
         this.element.classList.add("js")
 
         let runbutton = document.createElement("div")

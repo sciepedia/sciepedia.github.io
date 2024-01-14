@@ -51,6 +51,8 @@ export class PathData{
     }
 
     relative_path(parent:PathData){
+        console.log(this,parent);
+        
         const parent_log_json = JSON.stringify(parent.location)
         if (parent_log_json == JSON.stringify(this.location.slice(0,parent.location.length))){
             return new PathData(this.pub, this.author, [""].concat(this.location.slice(parent.location.length)))
@@ -58,6 +60,18 @@ export class PathData{
             return new PathData(this.pub,this.author, ["."].concat(this.location.slice(parent.location.length-1)))
         }
         return this
+    }
+
+    abbreviated(parent:PathData|null){
+        if (parent){
+
+            let rel = this.relative_path(parent)
+            if (parent.author == this.author){
+                return rel.location.join(".")
+            }
+            return rel.tostring()
+        }
+        return this.tostring()
     }
 
     get_language():language{
@@ -72,6 +86,11 @@ export class PathData{
 
     parent(){
         return this.location.length>1? new PathData(this.pub, this.author,this.location.slice(0,-1)):null
+    }
+
+
+    mini(){
+        return this.location.filter(item=>!["","."].includes(item)).join(".")
     }
 
 

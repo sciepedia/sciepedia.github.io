@@ -7,8 +7,10 @@ let pyo : PyodideInterface | undefined
 let print = (...x:any[])=>console.warn(x)
 
 async function setup_python(){
-    await import ("https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js") // @type:ignore
+    // @ts-ignore
+    await import ("https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js")
     window.print = (...x:any)=>{}
+    // @ts-ignore
     pyo = await loadPyodide({stdout:print}) as PyodideInterface
 
     // console.log(pyo.setStdout)

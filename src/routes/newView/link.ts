@@ -16,7 +16,7 @@ export function get_link(span:HTMLSpanElement){
 
 export class Link{
 
-    name:string
+    name:string = ""
     parent:Note
     element:HTMLSpanElement
     open:boolean
@@ -24,32 +24,44 @@ export class Link{
     path:PathData
 
     constructor(name:string, parent:Note, open = false){
+
         this.name = name
         this.parent = parent
         this.element = document.createElement("span")
         this.element.textContent = name
         this.element.classList.add("link")
         this.open = open
-        this.element.addEventListener("click", ()=>this.set_open(!this.open))
+        this.element.addEventListener("click", ()=>{
+            this.set_open(!this.open)
+            this.parent.content.save_linkstate()
+        })
         linkCounter ++ 
         this.element.id = `L${linkCounter}`
         linkRepo.set(this.element,this)
-        this.path = this.parent.path.create_child(this.name)
+        this.path = this.parent.path().create_child(this.name)
     }
+
+    set_path(name:PathData){
+        this.name = this.path.abbreviated(this.parent.path())
+        this.element.textContent = this.name
+    }
+
     remove(){
         this.child?.remove()
     }
 
     set_open(value:boolean){
+
         if (value == this.open) return
         if (value){
             let line = this.element.parentElement as HTMLParagraphElement
-            this.child = this.parent.create_child(this.path)
+            this.child = this.parent.create_child(this.path,this)
             line.append(this.child!.element)
         }else{
             this.child!.remove()
         }
         this.open=value
+
     }
 }
 
