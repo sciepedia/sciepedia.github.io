@@ -55,7 +55,7 @@ export class TextContent extends Content{
 
         this.get_links().forEach((link,i)=>{
             if (linkstate[i] && !this.note.call_hist.includes(link.path)){
-                // link.set_open(true)
+                link.set_open(true)
             }
         })
     }

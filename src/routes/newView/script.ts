@@ -18,12 +18,20 @@ export class ScriptContent extends TextContent{
         runbutton.classList.add("runbutton")
         runbutton.textContent = "▶"
         runbutton.contentEditable = "false"
-        runbutton.addEventListener("click",(e)=>this.execute())
+        runbutton.addEventListener("click",async (e)=>{
+            runbutton.textContent = "O"
+            await this.execute()
+            runbutton.textContent = "▶"
+
+        })
         this.element.addEventListener("keydown",(e)=>{
             console.log(e);
-            
             if (e.ctrlKey && e.key == "Enter"){
+                runbutton.textContent = 'O'
+                console.log("start running");
+                
                 this.execute()
+                runbutton.textContent = "▶"
             }
         })
         this.element.parentElement!.append(runbutton)
@@ -118,7 +126,7 @@ export class ScriptContent extends TextContent{
         
         try{
             let fn = Function(`return async()=>{${code}}`)()
-            let res = fn()
+            let res = await fn()
             console.log(res);
             
             this.print(res)

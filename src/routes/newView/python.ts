@@ -94,12 +94,17 @@ export class PythonContent extends ScriptContent{
         active_content = this
         code = code.replaceAll(" "," ")
 
-        run_python_code(code).catch(e=>{
-            console.log(e);
-            this.handle_error(e)
-        }).then(res=>{
+        try{
+
+            let res = await run_python_code(code)
             if (res != undefined) print(res)
-        })
+        }catch(e){
+            console.log(e);
+            this.handle_error(e as Error)
+        }
+        // .catch(e=>{
+        // }).then(res=>{
+        // })
     }
 
     handle_error(error:Error){
