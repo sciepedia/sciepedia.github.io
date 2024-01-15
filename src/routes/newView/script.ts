@@ -1,21 +1,23 @@
 
 import { exclude_internal_props } from "svelte/internal";
 import { store, type PathData } from "../model/data_store";
-import { TextContent } from "./content";
+import { Content } from "./content";
 import { Note } from "./note";
 import { Link } from "./link";
 import { is_link } from "../controller/util";
+import { TextContent } from "./textContent";
 
 export class ScriptContent extends TextContent{
     outfield:HTMLDivElement
-    constructor(note:Note,path:PathData){
-        super(note,path)
+    constructor(note:Note){
+        super(note)
         this.element.classList.add("js")
         this.element.spellcheck = false
 
         let runbutton = document.createElement("div")
         runbutton.classList.add("runbutton")
         runbutton.textContent = "▶"
+        runbutton.contentEditable = "false"
         runbutton.addEventListener("click",(e)=>this.execute())
         this.element.addEventListener("keydown",(e)=>{
             console.log(e);
@@ -27,6 +29,7 @@ export class ScriptContent extends TextContent{
         this.element.parentElement!.append(runbutton)
         this.outfield = document.createElement("div")
         this.outfield.classList.add("content")
+        this.outfield.contentEditable = "false"
         this.element.parentElement!.append(this.outfield)
     }
 
@@ -101,17 +104,20 @@ export class ScriptContent extends TextContent{
         this.outfield.innerHTML = ""
         
         window.print = (...x:any[])=>{this.print(...x)}
+        (window as any).putout = (x:any)=>this.outfield.append(x)
 
         let predefs = {vars:new Set<string>, values: new Array<[string,string]>()}
 
 
         let code = await this.get_content_text(this,this.data.Path,predefs)
-        console.log(predefs);
         
+        for (let [name, payload] of predefs.values){
+            code = `${name} = ${payload};\n`+ code
+        }
         console.log(code);
         
         try{
-            let fn = Function(code)
+            let fn = Function(`return async()=>{${code}}`)()
             let res = fn()
             console.log(res);
             

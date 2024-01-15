@@ -82,13 +82,23 @@ export class PathData{
     }
 
     collapsed_link_name(parent:PathData|null){
-        return this.tostring()
+
+        if (this.location[0] == "me" && this.location.length == 1){
+            return "@"+this.author
+        }
+
+        let res = this.location.slice(-1)[0]
+        if (res.length < 3 || res == this.get_language()){
+            res = this.location.slice(-2).join(".")
+        }
+        return res
+
     }
 
     get_language():language{
         let res:language = "txt"
         for (let item of this.location){
-            if (["js","txt","py"].includes(item)){
+            if (["js","txt","py","csv"].includes(item)){
                 res = item as language
             }
         }

@@ -158,6 +158,8 @@ div.editable>p>span.typo{
 }
 .supercontainer{
 	display: inline-grid;
+	/* top:-1em; */
+	position: relative
 }
 .tablecontainer{
 	display: flex;

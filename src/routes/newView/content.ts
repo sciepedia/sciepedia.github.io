@@ -1,82 +1,36 @@
-import { get } from "svelte/store";
-import { is_link } from "../controller/util";
-import { store, type NoteData, PathData } from "../model/data_store";
-import { Link, get_link } from "./link";
+
 import type { Note } from "./note";
-import { username } from "../model/store";
+import { store, type NoteData } from "../model/data_store";
+
+import { Link, get_link } from "./link";
+import { is_http_link, is_link, is_youtube_link, make_http_link, make_youtube_player } from "../controller/util";
+import {Image} from "./image"
 
 
-
-let contentRepo = new WeakMap<HTMLDivElement, TextContent> ()
-let repoCounter = 0
-
-
-export class TextContent{
+export abstract class Content{
 
     note:Note
     element:HTMLDivElement
-    data: NoteData
-    saves_pending: boolean
-    constructor(note:Note,path:PathData){
+    data:NoteData
+    saves_pending:boolean
+    constructor(note:Note){
         this.note = note
         this.element = document.createElement("div")
         this.element.classList.add("content")
         note.element.append(this.element)
-        
 
-        this.element.addEventListener("keydown",(e)=>{
-            if (e.key=="Tab" && e.target == this.element){
-                e.preventDefault()
-                this.insert_text(document.createTextNode("  "))
-            }
-        })
-        this.element.addEventListener("input",(e)=>{
-            
-            let target = window.getSelection()?.focusNode as HTMLElement
-            while (true){
-                if (target.classList && target.classList.contains("content"))break
-                target = target.parentNode as HTMLElement
-            }
-            let cont = get_content(target as HTMLDivElement)
-            cont?.on_input(e)
-        })
-        this.data = store.getitem(path,newdata=>{})
-        this.setText(this.data.Content)
-
-        this.element.contentEditable = String(this.data.Path.author == get(username))
-        if (this.element.contentEditable == "false"){
-            this.element.addEventListener("click",()=>{
-                let path = new PathData(this.data.Path.pub, get(username), this.data.Path.location)
-                let newpath = window.prompt(`to edit ${this.data.Path.author}'s note you need to make a copy`, path.tostring())
-                console.log(newpath);
-                
-            })
-        }
-        this.saves_pending = false
-
-        let linkstate=  store.get_linkstate(path)
-
-        this.get_links().forEach((link,i)=>{
-            if (linkstate[i] && !this.note.call_hist.includes(link.path)){
-                link.set_open(true)
-            }
-        })
-
+        this.data = store.getitem(note.path(),newdata=>{})
 
         repoCounter ++ 
         this.element.id = `C${repoCounter}`
         contentRepo.set(this.element,this)
+        this.saves_pending = false
+    }
+
+    on_input(e:Event){
 
     }
 
-    setText(text:string){
-        // this.element.textContent = text
-        let lines = text.split("\n")
-
-        for (let line of lines){
-            this.element.append(this.make_line(line))
-        }
-    }
 
     get_text(){
         let lines = []
@@ -87,6 +41,49 @@ export class TextContent{
         }
         return lines.join("\n")
     }
+
+
+    save(){
+        this.data.Content = this.get_text()
+        this.saves_pending = false
+        store.setitem(this.data)
+    }
+
+
+    save_linkstate(){
+        let linkstate:boolean[] = []
+        this.get_links().forEach(link=>linkstate.push(link.open))
+        store.set_linkstate(this.note.path(),linkstate)
+    }
+
+    save_lazy(){
+    
+        if (this.saves_pending){
+            return
+        }
+        this.saves_pending = true
+        setTimeout(()=>{
+            if(!this.saves_pending){return}
+            this.save()
+        },1000)
+    }
+
+    get_links(){
+        let links:Link[] = []
+        this.element.childNodes.forEach(p=>{
+            if (p.nodeName =="P"){
+                p.childNodes.forEach(n=>{
+                    if (is_link_element(n)){
+                        let link = get_link(n as HTMLSpanElement)
+                        if (link) links.push(link)
+                    }
+                })
+            }
+        })
+        return links
+    }
+
+
 
     get_line_text(line:HTMLParagraphElement):string{
 
@@ -127,6 +124,12 @@ export class TextContent{
         return txt
     }
 
+
+    make_word(t:string){
+        return new Text(t)
+    }
+
+
     make_line(txt:string,compact:boolean=true): HTMLElement{
 
         if (txt == ""){
@@ -143,9 +146,9 @@ export class TextContent{
         let nodes:Node[] = []
 
         for (let c in words){
-            let i  = Number (c)
-            let w = words[i]
-            if (is_link(w) && (!w.startsWith(".") || /\s+| | /.test(words[i-1]) || words[i-1] == undefined ) ){
+            // let i  = +c
+            let w = words[c]
+            if (is_link(w) && (!w.startsWith(".") || /\s+| | /.test(words[+c-1]) || words[+c-1] == undefined ) ){
                 try{
                     const link = new Link(w,this.note)
                     nodes.push(link.element)
@@ -153,7 +156,7 @@ export class TextContent{
                     console.log("failed link", w,e);
                     nodes.push(this.make_word(w))
                 }
-            /*
+            
             }else if(is_http_link(w)){
                 if (is_youtube_link(w))nodes.push(make_youtube_player(w))
                 else nodes.push(make_http_link(w))
@@ -161,7 +164,6 @@ export class TextContent{
                 const img = new Image(txt.slice(8))
                 nodes.push(img.element)
                 break
-            */
             }else{
                 nodes.push(this.make_word(w))
             }
@@ -173,206 +175,27 @@ export class TextContent{
         return p
     }
 
-    make_word(t:string){
-        return new Text(t)
-    }
-
-    on_input(e:Event){
-
-        if (e.type == "input" && ( ["¨"].includes ((e as InputEvent).data!) )){
-            return
-        }
-        
-        const sel = window.getSelection()
-        const target = sel?.focusNode! as Node
-        var offset = sel?.focusOffset!
-
-        var p: HTMLParagraphElement 
-
-        if (target.nodeName == "P"){
-            p = target as HTMLParagraphElement
-        }else if (target.nodeName == "DIV"){
-            p = target.firstChild as HTMLParagraphElement
-        }else if (target.parentElement?.nodeName == "P"){
-            p = target.parentElement as HTMLParagraphElement
-        }else if (target.parentElement?.parentElement?.nodeName == "P"){
-            p = target.parentElement?.parentElement as HTMLParagraphElement
-        }else{
-            
-            this.element.childNodes.forEach(c=>{
-
-                if (c.nodeName != "P"){
-                    const newp = document.createElement("p")
-                    if (c.nodeName == "DIV"){
-                        c.replaceWith(newp)
-                        newp.appendChild(c.firstChild!)
-                    }else{
-                        c.replaceWith(newp)
-                        newp.appendChild(c)
-                    }
-                    put_caret(newp,0)
-                }
-            })
-
-            return
-        }
-
-        if ((e as InputEvent).inputType == "insertParagraph"){
-
-            const prev_p = p.previousElementSibling as HTMLParagraphElement
-            
-            if (prev_p.lastChild?.textContent == ""){
-                prev_p.lastChild?.remove()
-            }
-
-            this.reload_line(prev_p)
-            // autocomplete.clear()
-            p.firstChild?.replaceWith(p.firstChild?.textContent!)
-            const newline = this.reload_line(p)
-            put_caret(newline,0)
-            const pc = prev_p.textContent          
-            if (pc){    
-                const wspc = pc?.length - pc.trimStart().length + (["{","[","("].includes(pc.slice(-1)) ? 2 : 0)
-                if (wspc){
-                    this.insert_text(document.createTextNode(" ".repeat(wspc)))
-                    put_caret(newline, wspc)
-                }
-            }
-            return
-        }        
-        
-        let txt = this.get_line_text(p)
-
-        if (txt != ""){
-            
-            let prev:Node|null = target
-
-            if (target.nodeName == "P"){
-                
-                prev = target.childNodes[offset]
-                offset = 0
-
-            }else if (target.parentElement?.nodeName == "SPAN"){
-                prev = target.parentElement;
-            }
-
-            if (prev == undefined){
-                console.warn("prev is undefined");
-                return
-            }
-
-            prev = prev.previousSibling
-            
-            while(prev !=null){
-                offset += prev.textContent?.length!
-                prev = prev.previousSibling
-            }
-        }else{
-            offset = 0
-        }
-
-        const newline = this.reload_line(p,txt)
-        put_caret(newline,offset)
-
-        this.save_lazy()
-        
-    }
-
-    get_links(){
-        let links:Link[] = []
-        this.element.childNodes.forEach(p=>{
-            if (p.nodeName =="P"){
-                p.childNodes.forEach(n=>{
-                    if (is_link_element(n)){
-                        let link = get_link(n as HTMLSpanElement)
-                        if (link) links.push(link)
-                    }
-                })
-            }
-        })
-        return links
-    }
-
-    save_linkstate(){
-        let linkstate:boolean[] = []
-        this.get_links().forEach(link=>linkstate.push(link.open))
-        store.set_linkstate(this.note.path(),linkstate)
-    }
-
-    save_lazy(){
-    
-        if (this.saves_pending){
-            return
-        }
-        this.saves_pending = true
-        setTimeout(()=>{
-            if(!this.saves_pending){return}
-            this.save()
-        },1000)
-    }
-
-    save(){
-        this.data.Content = this.get_text()
-        this.saves_pending = false
-        store.setitem(this.data)
-    }
 
 
-    reload_line(p:HTMLParagraphElement,txt?:string){
-        if (txt == undefined){
-            txt = this.get_line_text(p)
-        }
-        const newline = this.make_line(txt)//,false)
-        p.replaceWith(newline)
-        p.childNodes.forEach(c =>{
-            if(is_link_element(c)){
-                const link = get_link(c as HTMLSpanElement)
-                link?.remove()
-            }
-        })
-        return newline
-    }
+}
 
 
-    insert_text(element:Node){
+let contentRepo = new WeakMap<HTMLDivElement, Content> ()
+let repoCounter = 0
 
-        const selection = window.getSelection()!;
-        selection.deleteFromDocument();
-        selection.getRangeAt(0).insertNode(element);
-        if (element.parentElement instanceof HTMLBRElement){
-            element.parentElement.replaceWith(element)
-            console.log("replaced br");
-        }
-        selection.collapseToEnd()
 
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        range.collapse(false);
-        const sel = window.getSelection()!;
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }
-
-    set_editable(value:boolean){
-        if (get(username)!=this.data.Path.author) return
-        if (value){
-            this.element.contentEditable = "true"
-            this.element.focus()
-        }else{
-            this.element.contentEditable = "false"
-        }
-    }
+export function is_link_element(element:Node){
+    return (element instanceof HTMLElement) && element.classList.contains("link")
 }
 
 export function get_content(div: HTMLDivElement){
     return contentRepo.get(div)
 }
 
-function is_link_element(element:Node){
-    return (element instanceof HTMLElement) && element.classList.contains("link")
-}
 
-function put_caret(line:HTMLElement, offset:number):Node|null{
+
+
+export function put_caret(line:HTMLElement, offset:number):Node|null{
 
     
     let next = line.firstChild

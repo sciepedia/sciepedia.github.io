@@ -1,6 +1,8 @@
 
 import type {Note} from "./note"
 import type { PathData } from "../model/data_store"
+// import { last_focused_content } from "./content"
+import type { Content } from "./content"
 
 
 let linkRepo = new WeakMap<HTMLSpanElement, Link> ()
@@ -22,8 +24,6 @@ export class Link{
     linenumber:number|null = null
 
     constructor(name:string, parent:Note, open = false){
-
-        console.log(name);
         
         const splits = name.split(".")
         for (let item of splits[splits.length-1]){
@@ -44,7 +44,8 @@ export class Link{
         linkCounter ++ 
         this.element.id = `L${linkCounter}`
         linkRepo.set(this.element,this)
-        this.path = this.parent.path().create_child(this.name)        
+        this.path = this.parent.path().create_child(this.name)
+              
     }
 
     set_path(newpath:PathData){
@@ -55,15 +56,26 @@ export class Link{
         this.element.textContent = this.name
     }
 
+    set_collapsed(value:boolean){
+        if (this.open || this.path.get_language() != "txt"){
+            return
+        }
+        if (value){
+            this.element.textContent = this.path.collapsed_link_name(this.parent.path())
+        }else{
+            this.element.textContent = this.name
+        }
+    }
+
     remove(){
         this.child?.remove()
     }
 
     set_open(value:boolean){
-
         if (value == this.open) return
         this.element.classList.toggle("open")
         if (value){
+            this.set_collapsed(false)
             let line = this.element.parentElement as HTMLParagraphElement
             this.child = this.parent.create_child(this.path,this)
             line.append(this.child!.element)

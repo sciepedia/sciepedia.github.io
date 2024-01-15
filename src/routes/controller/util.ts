@@ -36,6 +36,7 @@ export function make_youtube_player(name:string){
     element.width = "560"
     element.height = "315"
     element.style.border = "0"
+    element.allowFullscreen = true
 
     if (name.startsWith("https://www.youtube.com/embed")){
         element.src = name

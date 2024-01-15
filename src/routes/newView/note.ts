@@ -1,11 +1,13 @@
 import { store } from "../model/data_store";
 import type { PathData, language } from "../model/data_store";
-import { TextContent } from "./content";
+import type { Content } from "./content";
 import {open_context_menu} from "./contextMenu"
+import { CsvContent } from "./csvContent";
 import type { Link } from "./link";
 import { PythonContent } from "./python";
 import { rename_note } from "./renamer";
 import { ScriptContent } from "./script";
+import { TextContent } from "./textContent";
 
 
 export class Note{
@@ -13,7 +15,7 @@ export class Note{
     creator?: Link
     element:HTMLDivElement
     head?:Head
-    content:TextContent
+    content:Content
     language:language
     call_hist:PathData[] = []
 
@@ -33,25 +35,22 @@ export class Note{
 
         
         if (this.language == "txt"){
-            this.content = new TextContent(this,path)
+            this.content = new TextContent(this)
         }else if(this.language == "js"){
-            this.content = new ScriptContent(this,path)
+            this.content = new ScriptContent(this)
         }else if (this.language == "py"){
-            this.content = new PythonContent(this,path)
+            this.content = new PythonContent(this)
+        }else if (this.language == "csv"){
+            console.log("creating csv");
+            
+            this.content = new CsvContent(this)
         }else{
-            this.content = new TextContent(this,path)
+            this.content = new TextContent(this)
         }
 
         if (creator){
             this.call_hist = creator!.parent.call_hist.concat(creator!.parent.path())
         }
-
-        // // this.content.setText(data.Content)
-        // this.element.addEventListener("click",(e)=>{
-        //     if (!this.content.element.contains(e.target as Node)){
-        //         e.preventDefault()
-        //     }
-        // })
     }
 
     path(){
