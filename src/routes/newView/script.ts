@@ -117,9 +117,6 @@ export class ScriptContent extends TextContent{
 
     }
 
-
-    
-
     print(...args:any[]){
         let loc = args[0]
         args = args.slice(1)
@@ -128,7 +125,7 @@ export class ScriptContent extends TextContent{
         L.element.style.float = "right"
         p.append(L.element)
         for (let arg of args){
-            p.append(document.createTextNode(arg))
+            p.append(parse(arg))
             p.append(document.createTextNode(" "))
         }
         this.outfield.append(p)
@@ -140,8 +137,81 @@ let scriptKeywords = ['abstract', 'arguments', 'await', 'boolean', 'break', 'byt
 
 
 
-// Construct a regex pattern from the keywords
-// let keywordRegex = new RegExp("\\b" + scriptKeywords.join("\\b|\\b") + "\\b");
+function parse(t:any):HTMLElement{
+
+
+    let is_simple = (t:any)=> ["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null
+
+
+    let sp = document.createElement("span")
+    let tag = t.constructor.name
+    if (is_simple(t)){
+
+        if ( ["number", "boolean"].includes(typeof t)) {
+            sp.style.color = "orange"
+        }
+        let st = String(t)
+        sp.textContent = st
+
+    }else{
+
+        tag += ` [${Object.keys(t).length}]`
+        sp.style.color = "var(--blue)"
+
+        sp.style.cursor = "pointer"
+
+        let isopen = false
+        let p : HTMLParagraphElement | undefined
+
+        function open(){
+            isopen = true
+            p = document.createElement("p")
+            p.style.paddingLeft = "2em"
+
+            sp.append(p)
+            for (let key of Object.keys(t)){
+                p.append(key, ": ")
+                p.append(parse(t[key]))
+                p.append(document.createElement("br"))
+            }
+        }
+        sp.addEventListener('click',(e)=>{
+            if (e.target != sp) return
+            
+            if (isopen){
+                p?.remove()
+                isopen = false
+                return
+            }
+            open()
+        })
+
+        let previtems = []
+        for (let key of Object.keys(t)){
+            if (previtems.length>3){
+                previtems.push("...")
+                break
+            }
+            let newitem = ""
+            if (!(t instanceof Array)){
+                newitem += key + ": "
+            }
+            newitem  += t[key]
+            previtems.push(newitem)
+        }
+
+        let preview = document.createElement("span")
+        preview.textContent = previtems.join(", ")
+        preview.style.color = "var(--color)"
+
+        sp.textContent = tag + " "
+        sp.append(preview)
+
+    }
+    return sp
+}
+
+
 
 const syntaxclasses = [
     {pattern:(x:string)=>/[\[\]{}()]/.test(x),color:"yellow"},
