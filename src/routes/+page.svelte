@@ -7,8 +7,6 @@
     import {tick} from "svelte"
     
     import {Note } from "./newView/note"
-    import {make_editable} from "./newView/content"
-
     import { is_link } from "./controller/util"
     import { store } from "./model/data_store"
 
@@ -125,11 +123,11 @@ If you want to learn more, check out: #sciepedia:kormann
 
         page.appendChild(home.element)
 
-        document.body.addEventListener("click", e => {
-            if(e.target == document.body){
-                make_editable (null)
-            }
-        })
+        // document.body.addEventListener("click", e => {
+        //     if(e.target == document.body){
+        //         make_editable (null)
+        //     }
+        // })
 
         window.addEventListener("onunload",_=>{
             localStorage.unloading = true

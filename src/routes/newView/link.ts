@@ -22,8 +22,9 @@ export class Link{
     linenumber:number|null = null
 
     constructor(name:string, parent:Note, open = false){
-        if (name.endsWith(".")) name = name.slice(0,-1)
 
+        console.log(name);
+        
         const splits = name.split(".")
         for (let item of splits[splits.length-1]){
             if (/^[0-9]+$/.test(item)) this.linenumber = +item
@@ -43,11 +44,14 @@ export class Link{
         linkCounter ++ 
         this.element.id = `L${linkCounter}`
         linkRepo.set(this.element,this)
-        this.path = this.parent.path().create_child(this.name)
+        this.path = this.parent.path().create_child(this.name)        
     }
 
-    set_path(name:PathData){
-        this.name = this.path.abbreviated(this.parent.path())
+    set_path(newpath:PathData){
+        console.log(newpath);
+        
+        this.path = newpath
+        this.name = newpath.relative_path_string(this.parent.path())
         this.element.textContent = this.name
     }
 

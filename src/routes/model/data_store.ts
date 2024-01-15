@@ -3,6 +3,7 @@
 import { get } from "svelte/store"
 import {getiditem, getitem,setitem} from "./backend"
 import { username } from "./store"
+import { is_link, valid_username } from "../controller/util"
 
 
 
@@ -11,15 +12,14 @@ export type language = 'txt' | 'js' | 'py' | 'csv'
 export type NoteData = {Path:PathData, Content:string, comments?:uuid[], id:uuid, comment_of?:uuid}
 
 
-
 export function get_path_data(path:string, default_author?:string):PathData{
+
+    if (!is_link(path))throw new Error("invalid path: "+path)
 
     if (path.startsWith("@")) path = path.replace("@", "#me:")
 
     let pub = path.startsWith("#")
-    if (!path.startsWith("#") && !path.startsWith("_")){
-        throw new Error("invalid path: "+path)
-    }
+
     path = path.substring(1)
 
     let author = default_author ?? get(username)
@@ -49,30 +49,39 @@ export class PathData{
 
     tostring(){
         if (this.location.join(".") == "me") return "@"+this.author
-        return (this.pub?"#":"_" )+this.location.join(".")+`:${this.author}`
+        let prefix = [".",""].includes(this.location[0]) ? "" : (this.pub?"#":"_" )
+         return prefix+this.location.join(".")+ (this.author ? `:${this.author}` : "" )
     }
 
-    relative_path(parent:PathData){
-        console.log(this,parent);
+    relative_path_string(parent:PathData){
+
+        if (parent.pub != this.pub || parent.location.length > this.location.length) return this.tostring()
+        let locstring = this.location.join(".")
         
-        const parent_log_json = JSON.stringify(parent.location)
-        if (parent_log_json == JSON.stringify(this.location.slice(0,parent.location.length))){
-            return new PathData(this.pub, this.author, [""].concat(this.location.slice(parent.location.length)))
-        }else if(parent.location.length > 2 && JSON.stringify(parent.location.slice(0,-1)) == JSON.stringify(this.location.slice(0,parent.location.length))){
-            return new PathData(this.pub,this.author, ["."].concat(this.location.slice(parent.location.length-1)))
+        if (JSON.stringify(parent.location) == JSON.stringify(this.location.slice(0,parent.location.length))){
+            locstring = "." + this.location.slice(parent.location.length).join(".")
+        }else if(JSON.stringify(parent.location.slice(0,-1)) == JSON.stringify(this.location.slice(0,parent.location.length-1))){
+            locstring = ".." + this.location.slice(parent.location.length-1).join(".")
         }
-        return this
+        
+        if (!locstring.startsWith(".")){
+            (this.pub ? "#" : "_") + locstring
+        }
+        if (this.author != parent.author) locstring += ":" + this.author
+        return locstring
     }
 
-    abbreviated(parent:PathData|null){
-        if (parent){
-
-            let rel = this.relative_path(parent)
-            if (parent.author == this.author){
-                return rel.location.join(".")
-            }
-            return rel.tostring()
+    title_string(parent?:PathData){
+        let res = this.tostring()
+        if(parent){
+            res = this.relative_path_string(parent)
         }
+        while (["#","_","."].includes(res[0])) res = res.slice(1)
+
+        return res.split(":")[0]
+    }
+
+    collapsed_link_name(parent:PathData|null){
         return this.tostring()
     }
 
@@ -88,11 +97,6 @@ export class PathData{
 
     parent(){
         return this.location.length>1? new PathData(this.pub, this.author,this.location.slice(0,-1)):null
-    }
-
-
-    mini(){
-        return this.location.filter(item=>!["","."].includes(item)).join(".")
     }
 
 

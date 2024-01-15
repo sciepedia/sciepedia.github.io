@@ -1,6 +1,6 @@
 import { store } from "../model/data_store";
 import type { PathData, language } from "../model/data_store";
-import { TextContent, make_editable } from "./content";
+import { TextContent } from "./content";
 import {open_context_menu} from "./contextMenu"
 import type { Link } from "./link";
 import { PythonContent } from "./python";
@@ -46,13 +46,12 @@ export class Note{
             this.call_hist = creator!.parent.call_hist.concat(creator!.parent.path())
         }
 
-        // this.content.setText(data.Content)
-        this.element.addEventListener("click",(e)=>{
-            if (!this.content.element.contains(e.target as Node)){
-                make_editable(null)
-                e.preventDefault()
-            }
-        })
+        // // this.content.setText(data.Content)
+        // this.element.addEventListener("click",(e)=>{
+        //     if (!this.content.element.contains(e.target as Node)){
+        //         e.preventDefault()
+        //     }
+        // })
     }
 
     path(){
@@ -70,6 +69,25 @@ export class Note{
         return new Note(path,link)
     }
 
+
+    rename(newpath:PathData){
+
+        let item = store.getitem(newpath,newitem=>{
+            this.content.data.id = newitem.id
+            this.content.save()
+        })
+
+        this.content.data.Path = newpath
+        this.content.data.id = item.id
+    
+        this.creator?.set_path(newpath)
+
+        let newhead = new Head(this,newpath)
+        this.head?.element.replaceWith(newhead.element)
+        this.head = newhead
+        this.creator?.parent.content.save()
+    }
+
 }
 
 
@@ -81,39 +99,26 @@ export class Head{
         this.note = note
         this.element = document.createElement("div")
         this.element.classList.add("head")
+        this.element.contentEditable = "false"
         let titleElement = document.createElement("h2")
 
         let title:string
         if (this.note.creator){
-            title = path.relative_path(this.note.creator!.parent.path()).mini()
+            title = path.title_string(this.note.creator!.parent.path())
         }else{
-            title = path.mini()
+            title = path.title_string()
         }
         titleElement.textContent = title
         this.element.append(titleElement)
         this.note.element.append(this.element)
 
         this.element.addEventListener("click",(e)=>{
-            rename_note(this.note.content.data.Path).then(newpath=>{
-
-                let item = store.getitem(newpath,newitem=>{
-                    this.note.content.data.id = newitem.id
-                    this.note.content.save()
-                })
-
-                this.note.content.data.Path = newpath
-                this.note.content.data.id = item.id
-
-                title = note.content.data.Path.relative_path(this.note.creator!.parent.path()).mini()
-                this.element.textContent = title
-
-
-            })
+            rename_note(this.note.content.data.Path).then(newpath=>{if (newpath) this.note.rename(newpath)})
+            .catch(()=>{})
         })
         this.element.addEventListener("contextmenu",(e)=>{
             open_context_menu(e,this.note)
         })
-
-
     }
+
 }

@@ -21,7 +21,7 @@ export function open_context_menu(e:MouseEvent, note:Note){
                     p.textContent = "copied."}
             },
             {
-                tag : `expand note ${note.path().mini()}`,
+                tag : `expand note ${note.path().tostring()}`,
                 fn : async (p:HTMLParagraphElement)=>{
                     window.location.search = note.path().tostring().replace("#","")
                 }

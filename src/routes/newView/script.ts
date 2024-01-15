@@ -104,15 +104,21 @@ export class ScriptContent extends TextContent{
 
         let predefs = {vars:new Set<string>, values: new Array<[string,string]>()}
 
+
         let code = await this.get_content_text(this,this.data.Path,predefs)
+        console.log(predefs);
+        
         console.log(code);
         
         try{
             let fn = Function(code)
             let res = fn()
+            console.log(res);
+            
             this.print(res)
         }catch (e){
-            this.print("error",e)
+
+            console.error(e)
         }
 
     }
@@ -120,11 +126,16 @@ export class ScriptContent extends TextContent{
     print(...args:any[]){
         let loc = args[0]
         args = args.slice(1)
+
+        
         let p = document.createElement("p")
-        let L = new Link(loc,this.note)
-        L.element.style.float = "right"
-        p.append(L.element)
+        if(loc!=undefined){
+            let L = new Link(loc,this.note)
+            L.element.style.float = "right"
+            p.append(L.element)
+        }
         for (let arg of args){
+
             p.append(parse(arg))
             p.append(document.createTextNode(" "))
         }
@@ -139,7 +150,8 @@ let scriptKeywords = ['abstract', 'arguments', 'await', 'boolean', 'break', 'byt
 
 function parse(t:any):HTMLElement{
 
-
+    console.log("parse", t);
+    
     let is_simple = (t:any)=> ["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null
 
 

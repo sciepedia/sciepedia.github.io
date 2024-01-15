@@ -6,13 +6,9 @@ import type { Note } from "./note";
 import { username } from "../model/store";
 
 
-let last_editable:TextContent | null
-export function make_editable(content:TextContent|null){
-    if (content == last_editable)return 
-    last_editable?.set_editable(false)
-    last_editable = content
-    last_editable?.set_editable(true)
-}
+
+let contentRepo = new WeakMap<HTMLDivElement, TextContent> ()
+let repoCounter = 0
 
 
 export class TextContent{
@@ -26,19 +22,7 @@ export class TextContent{
         this.element = document.createElement("div")
         this.element.classList.add("content")
         note.element.append(this.element)
-        this.element.addEventListener("click", (e)=>{
-            let target = e.target as HTMLElement
-            if (target.classList.contains("link")){
-                e.preventDefault()
-                return
-            }
-            while (target.parentElement && !target.classList.contains("content") && !target.classList.contains("note")){
-                target = target.parentElement
-            }
-            if (target == this.element){
-                make_editable(this)
-            }
-        })
+        
 
         this.element.addEventListener("keydown",(e)=>{
             if (e.key=="Tab" && e.target == this.element){
@@ -46,9 +30,28 @@ export class TextContent{
                 this.insert_text(document.createTextNode("  "))
             }
         })
-        this.element.addEventListener("input",(e)=>this.on_input(e))
+        this.element.addEventListener("input",(e)=>{
+            
+            let target = window.getSelection()?.focusNode as HTMLElement
+            while (true){
+                if (target.classList && target.classList.contains("content"))break
+                target = target.parentNode as HTMLElement
+            }
+            let cont = get_content(target as HTMLDivElement)
+            cont?.on_input(e)
+        })
         this.data = store.getitem(path,newdata=>{})
         this.setText(this.data.Content)
+
+        this.element.contentEditable = String(this.data.Path.author == get(username))
+        if (this.element.contentEditable == "false"){
+            this.element.addEventListener("click",()=>{
+                let path = new PathData(this.data.Path.pub, get(username), this.data.Path.location)
+                let newpath = window.prompt(`to edit ${this.data.Path.author}'s note you need to make a copy`, path.tostring())
+                console.log(newpath);
+                
+            })
+        }
         this.saves_pending = false
 
         let linkstate=  store.get_linkstate(path)
@@ -59,10 +62,14 @@ export class TextContent{
             }
         })
 
+
+        repoCounter ++ 
+        this.element.id = `C${repoCounter}`
+        contentRepo.set(this.element,this)
+
     }
 
     setText(text:string){
-        console.log("newtext", text,this);
         // this.element.textContent = text
         let lines = text.split("\n")
 
@@ -122,7 +129,6 @@ export class TextContent{
 
     make_line(txt:string,compact:boolean=true): HTMLElement{
 
-        
         if (txt == ""){
             let p = document.createElement("p")
             p.innerHTML = "<br>"
@@ -147,13 +153,15 @@ export class TextContent{
                     console.log("failed link", w,e);
                     nodes.push(this.make_word(w))
                 }
-            // }else if(is_http_link(w)){
-            //     if (is_youtube_link(w))nodes.push(make_youtube_player(w))
-            //     else nodes.push(make_http_link(w))
-            // }else if(w.startsWith("##image:")){
-            //     const img = new Image(txt.slice(8))
-            //     nodes.push(img.element)
-            //     break
+            /*
+            }else if(is_http_link(w)){
+                if (is_youtube_link(w))nodes.push(make_youtube_player(w))
+                else nodes.push(make_http_link(w))
+            }else if(w.startsWith("##image:")){
+                const img = new Image(txt.slice(8))
+                nodes.push(img.element)
+                break
+            */
             }else{
                 nodes.push(this.make_word(w))
             }
@@ -161,7 +169,7 @@ export class TextContent{
         nodes.forEach(n=>{
             p.appendChild(n)
         })
-
+        
         return p
     }
 
@@ -171,15 +179,10 @@ export class TextContent{
 
     on_input(e:Event){
 
-        if(this.element.contentEditable != "true"){return}
-        if (e.target != this.element){return}
-
         if (e.type == "input" && ( ["¨"].includes ((e as InputEvent).data!) )){
             return
         }
         
-        // autocomplete.clear()
-
         const sel = window.getSelection()
         const target = sel?.focusNode! as Node
         var offset = sel?.focusOffset!
@@ -269,8 +272,7 @@ export class TextContent{
         }
 
         const newline = this.reload_line(p,txt)
-
-        put_caret(newline,offset)  
+        put_caret(newline,offset)
 
         this.save_lazy()
         
@@ -360,6 +362,10 @@ export class TextContent{
             this.element.contentEditable = "false"
         }
     }
+}
+
+export function get_content(div: HTMLDivElement){
+    return contentRepo.get(div)
 }
 
 function is_link_element(element:Node){
