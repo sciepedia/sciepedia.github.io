@@ -68,9 +68,9 @@ body.light{
 
 .title:focus, .content:focus{
 	outline: none;
-	background-color: var(--focus);
-	box-shadow: 0 0 1em  var(--focus);
-	color: var(--color);
+	/* background-color: var(--focus); */
+	/* box-shadow: 0 0 1em  var(--focus); */
+	/* color: var(--color); */
 }
 
 .image{
@@ -102,7 +102,7 @@ body.light{
 div.editable>p>span.typo{
 	/* red underline */
 	text-decoration: underline;
-	text-decoration-color: var(--error);
+	/* text-decoration-color: var(--error); */
 }
 
 
