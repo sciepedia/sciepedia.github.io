@@ -45,16 +45,12 @@ If you want to learn more, check out: #sciepedia:kormann
 `
 
     let page:HTMLDivElement
-    // import {root} from "./view/note"
 
     import { is_online, lightmode, pwdhash, username } from "./model/store";
     import { PathData, get_path_data } from "./model/data_store";
     import Searchbar from "./newView/searchbar.svelte";
 
-    let hist: PathData[]
-    let logged_in_prefix = $username[0]
-
-    let root = {path:"_home:"+$username}
+    let home_path = get_path_data("_home:"+$username)
 
 
     async function setup(){
@@ -76,9 +72,18 @@ If you want to learn more, check out: #sciepedia:kormann
 
         homebutton = `<a href=/ onclick="setTimeout(()=>{window.location.href='${window.origin}'})" id=homebtn>sciepedia</a>`
         fulltitle = homebutton
+
+        if(!store.has(home_path)){
+            const data = ({Path:home_path,Content:"welcome to #sciepedia:kormann\nif you're new try out the tutorial: _tutorial",id:crypto.randomUUID()})
+            localStorage[JSON.stringify(data.Path)] = JSON.stringify(data)
+        }
+
+        const tut_path = get_path_data('_tutorial:'+ $username)
+        if (!store.has(tut_path)){
+            store.setitem({Path:tut_path,Content:tutorial_text.replace("{}",window.location.origin),id:crypto.randomUUID()})
+        }
+        
         let search = window.location.search 
-    
-        hist = [get_path_data(root.path)]
         if(search && search.length>1){
             search = decodeURI(search.slice(1))
             if (!is_link(search)){
@@ -86,48 +91,16 @@ If you want to learn more, check out: #sciepedia:kormann
             }
             console.log("searching:",search)
             if (is_link(search)){
-                hist.push(hist[0])
-                root.path = search
+
+                home_path=get_path_data(search)
             }
         }
 
         page = document.querySelector("#page") as HTMLDivElement
-        // window.addEventListener("scroll",e=>{
 
-        //     fulltitle = homebutton
-        //     let top_input = {element:{offsetTop:0},fullpath:"<span id=homebtn>sciepedia</span>"}
-        //     title_list.forEach(tle=>{
-
-        //         if (window.scrollY + tle.element.offsetHeight > tle.element.offsetTop){
-        //             if (top_input.element.offsetTop < tle.element.offsetTop){
-        //                 // top_input = tle
-        //             }
-        //         }
-        //     })
-
-        // })
-        const tut_path = get_path_data('_tutorial:'+ $username)
-        if (!store.has(tut_path)){
-            store.setitem({Path:tut_path,Content:tutorial_text.replace("{}",window.location.origin),id:crypto.randomUUID()})
-        }
-
-        let home_path = get_path_data(root.path)
-        if(!store.has(home_path)){
-            const data = ({Path:home_path,Content:"welcome to #sciepedia:kormann\nif you're new try out the tutorial: _tutorial",id:crypto.randomUUID()})
-            localStorage[JSON.stringify(data.Path)] = JSON.stringify(data)
-        }
         
         let home = new Note(home_path)
-
-        // title_list.push({element:home.head.title_element,fullpath:home_path})
-
         page.appendChild(home.element)
-
-        // document.body.addEventListener("click", e => {
-        //     if(e.target == document.body){
-        //         make_editable (null)
-        //     }
-        // })
 
         window.addEventListener("onunload",_=>{
             localStorage.unloading = true

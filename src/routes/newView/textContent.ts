@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { cleanMarkup, is_http_link, is_link, is_youtube_link, make_http_link, make_youtube_player } from "../controller/util";
-import { store, type NoteData, PathData } from "../model/data_store";
+import { store, type NoteData, PathData, get_path_data } from "../model/data_store";
 import { Link, get_link } from "./link";
 import type { Note } from "./note";
 import { username } from "../model/store";
@@ -39,20 +39,15 @@ export class TextContent extends Content{
 
         this.element.addEventListener("paste", this.on_paste)
 
-
-        // this.element.addEventListener("click",(e)=>{
-        //     let target = get_parent_content(e.target as HTMLElement)
-            // if (target == this.element) this.set_focused(true)
-        // })
-        this.setText(this.data.Content)
-
         this.element.contentEditable = String(this.data.Path.author == get(username))
         if (this.element.contentEditable == "false"){
             this.element.addEventListener("click",()=>{
                 let path = new PathData(this.data.Path.pub, get(username), this.data.Path.location)
                 let newpath = window.prompt(`to edit ${this.data.Path.author}'s note you need to make a copy`, path.tostring())
+                if (newpath == null) return
                 console.log(newpath);
-                
+                // throw "not implemented"
+                this.note.rename(get_path_data(newpath))
             })
         }
 
@@ -60,13 +55,17 @@ export class TextContent extends Content{
 
         this.get_links().forEach((link,i)=>{
             if (linkstate[i] && !this.note.call_hist.includes(link.path)){
-                link.set_open(true)
+                // link.set_open(true)
             }
         })
-
-
-
     }
+
+    set_data(data:NoteData){
+        this.element.innerHTML = ""
+        this.data = data
+        this.setText(this.data.Content)
+    }
+
 
     setText(text:string){
         // this.element.textContent = text

@@ -26,9 +26,8 @@ export class Link{
     constructor(name:string, parent:Note, open = false){
         
         const splits = name.split(".")
-        for (let item of splits[splits.length-1]){
-            if (/^[0-9]+$/.test(item)) this.linenumber = +item
-        }
+        let item = splits[splits.length-1]            
+        if (/^[0-9]+$/.test(item)) this.linenumber = +item
 
         this.name = name
         this.parent = parent
@@ -49,7 +48,8 @@ export class Link{
     }
 
     set_path(newpath:PathData){
-        console.log(newpath);
+
+        console.log("renaming link to", newpath.tostring(),this.parent.path().tostring());
         
         this.path = newpath
         this.name = newpath.relative_path_string(this.parent.path())
@@ -81,6 +81,8 @@ export class Link{
             line.append(this.child!.element)
 
             if (this.linenumber!=null){
+                console.log(this.linenumber);
+                
                 let item = this.child.content.element.childNodes.item(this.linenumber-1);
                 (item as HTMLParagraphElement).style.background = "var(--focus)"
             }

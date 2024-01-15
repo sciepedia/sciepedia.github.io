@@ -1,5 +1,7 @@
+import { get } from "svelte/store";
 import { store } from "../model/data_store";
 import type { PathData, language } from "../model/data_store";
+import { username } from "../model/store";
 import type { Content } from "./content";
 import {open_context_menu} from "./contextMenu"
 import { CsvContent } from "./csvContent";
@@ -18,10 +20,11 @@ export class Note{
     content:Content
     language:language
     call_hist:PathData[] = []
+    init_path:PathData
 
     constructor(path:PathData, creator?:Link){
-
-        this.path=()=>path // hack for initialization
+        this.init_path = path
+        console.log("creating note", path);
 
         this.creator = creator
 
@@ -54,11 +57,14 @@ export class Note{
     }
 
     path(){
-        return this.content.data.Path
+        try{
+            return this.content.data.Path
+        }catch{
+            return this.init_path
+        }
     }
 
     remove(){
-
         this.content.save()
         this.content.save_linkstate()
         this.element.remove()
@@ -78,15 +84,22 @@ export class Note{
 
         this.content.data.Path = newpath
         this.content.data.id = item.id
-    
-        this.creator?.set_path(newpath)
-
-        let newhead = new Head(this,newpath)
-        this.head?.element.replaceWith(newhead.element)
-        this.head = newhead
-        this.creator?.parent.content.save()
+        this.content.get_links().forEach(link=>{            
+            link.set_path(link.path)
+        })
+        this.content.save()
+        
+        let newnote = new Note(this.path())
+        this.element.replaceWith(newnote.element)
+        
+        if(this.creator){
+            this.creator.set_path(newpath)    
+            this.creator.child = newnote
+            this.creator.parent.content.save()
+        }else{
+            window.location.search = newpath.tostring().replace("#","")
+        }
     }
-
 }
 
 
@@ -112,8 +125,9 @@ export class Head{
         this.note.element.append(this.element)
 
         this.element.addEventListener("click",(e)=>{
-            rename_note(this.note.content.data.Path).then(newpath=>{if (newpath) this.note.rename(newpath)})
+            rename_note(this.note.content.data.Path)
             .catch(()=>{})
+            .then(newpath=>{if (newpath) this.note.rename(newpath)})
         })
         this.element.addEventListener("contextmenu",(e)=>{
             open_context_menu(e,this.note)

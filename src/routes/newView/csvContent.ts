@@ -1,3 +1,4 @@
+import type { NoteData } from "../model/data_store"
 import { Content, put_caret } from "./content"
 import type { Note } from "./note"
 
@@ -92,6 +93,10 @@ export class CsvContent extends Content{
                 this.on_input(e)
             }
         })
+    }
+
+    set_data(data: NoteData): void {
+        
     }
 
     removecolumn(table:HTMLTableElement, columnindex:number):  Node {

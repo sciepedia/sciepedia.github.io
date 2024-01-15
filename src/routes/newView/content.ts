@@ -19,7 +19,10 @@ export abstract class Content{
         this.element.classList.add("content")
         note.element.append(this.element)
 
-        this.data = store.getitem(note.path(),newdata=>{})
+        this.data = store.getitem(note.path(),newdata=>{
+            this.set_data(newdata)
+        })
+        this.set_data (this.data)
 
         repoCounter ++ 
         this.element.id = `C${repoCounter}`
@@ -27,9 +30,11 @@ export abstract class Content{
         this.saves_pending = false
     }
 
-    on_input(e:Event){
-
+    set_data(data:NoteData){
+        throw "not implemented"
     }
+
+    on_input(e:Event){}
 
 
     get_text(){
@@ -86,10 +91,6 @@ export abstract class Content{
 
 
     get_line_text(line:HTMLParagraphElement):string{
-
-        // let ret = line.textContent ?? ""
-        // console.log(ret);
-        // return ret
         
         let txt = ""
         
@@ -174,9 +175,6 @@ export abstract class Content{
         
         return p
     }
-
-
-
 }
 
 

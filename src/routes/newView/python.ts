@@ -35,13 +35,12 @@ export async function run_python_code(code : string){
         return s.split(/^\%pip\s*install/)[1].trim()
     })
 
-
     for (let imp of imports){
         await pyo.loadPackage(imp)
     }
-    
-    code = code.replace(/^\%pip\s*install\s*.*/, "")
 
+    code = lines.filter(s=>!/^\%pip\s*install/.test(s)).join("\n")
+    
     let res = pyo.runPython(code)
 
     return res
@@ -99,7 +98,7 @@ export class PythonContent extends ScriptContent{
             console.log(e);
             this.handle_error(e)
         }).then(res=>{
-            print(res)
+            if (res != undefined) print(res)
         })
     }
 
