@@ -72,7 +72,6 @@ export class PythonContent extends ScriptContent{
         code = code.replaceAll(" "," ")
 
         try{
-
             let res = await this.run_python_code(code)
             if (res != undefined) print(res)
         }catch(e){
@@ -96,6 +95,9 @@ export class PythonContent extends ScriptContent{
             if (/^\%pip\s*install/.test(line)){
                 let importtarget = line.split(/^\%pip\s*install/)[1].trim()
                 need_installs = true
+                if (importtarget == "tinygrad"){
+                    return `await micropip.install("tinygrad")\nawait micropip.install("sqlite3")`
+                }
                 return `await micropip.install("${importtarget}")`
             }
             return line
@@ -106,7 +108,7 @@ export class PythonContent extends ScriptContent{
         console.log(code);
         let globals = pyo?.globals
 
-        globals!.set("print", (...x:any[])=> this.print(...x.map(item=>item.toJs())) )
+        globals!.set("print", (...x:any[])=> this.print(...x.map(item=> item.toJs? item.toJs() : item)) )
         let res = pyo!.runPythonAsync(code)
         return res
     }
@@ -138,7 +140,7 @@ export class PythonContent extends ScriptContent{
         
         let p = document.createElement("p")
         for (let arg of args){
-            p.append(parse(arg))
+            p.append(parse(arg), " ")
         }
         this.outfield.append(p)
     }
@@ -150,16 +152,26 @@ function parse(t:any):HTMLElement{
     let is_simple = (t:any)=> ["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null
 
     let sp = document.createElement("span")    
+
+
     if (is_simple(t)){
 
         if ( ["number", "boolean"].includes(typeof t)) {
             sp.style.color = "orange"
         }
-        let st = String(t)
-        sp.textContent = st
+        if(typeof t == "string"){            
+            for (let line of t.split("\n")){
+                sp.append(new Text(line))
+                sp.append(document.createElement("br"))
+            }
+            sp.style.whiteSpace = "pre"
+        }else{   
+            let st = String(t)
+            sp.textContent = st
+        }
 
     }else{
-        let tag = t.type
+        let tag = t.type ?? t.constructor.name
         sp.textContent = tag + " "
 
         sp.style.color = "var(--blue)"
@@ -169,7 +181,7 @@ function parse(t:any):HTMLElement{
         let p : HTMLParagraphElement | undefined
 
         function open(){
-            console.log("open", t);
+            console.log("open", t, tag);
 
             isopen = true
             p = document.createElement("p")
@@ -179,11 +191,18 @@ function parse(t:any):HTMLElement{
             let maxcount = 20
 
             if (tag == "list"){
-
                 for (let item of t){
                     if ((maxcount--) < 0) break
                     p!.append(parse(item))
                     p!.append(document.createElement("br"))
+                }
+            }else if (tag == "dict"){
+                console.log("print map");
+                
+                for (let key of t){
+                    if ((maxcount--) < 0) break
+                    p.append(key, ": ")
+                    p.append(parse(t.get(key)))
                 }
             }else{
                 try{

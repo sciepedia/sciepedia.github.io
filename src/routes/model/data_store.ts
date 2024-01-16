@@ -65,7 +65,7 @@ export class PathData{
         }
         
         if (!locstring.startsWith(".")){
-            (this.pub ? "#" : "_") + locstring
+            locstring = (this.pub ? "#" : "_") + locstring
         }
         if (this.author != parent.author) locstring += ":" + this.author
         return locstring
