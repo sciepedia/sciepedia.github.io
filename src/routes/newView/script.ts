@@ -14,38 +14,41 @@ if (browser){
 
     window.addEventListener("keydown",(e)=>{
         
-        if (e.ctrlKey && e.key == "Enter" && last_run_script != null){
-            last_run_script.runbutton.textContent = 'O'
+        if (e.ctrlKey && e.key == "Enter" && last_run_script != null && last_run_script.runnable){
+            last_run_script.runbutton!.textContent = 'O'
             console.log("start running");
-            
             last_run_script.execute()
-            last_run_script.runbutton.textContent = "▶"
+            last_run_script.runbutton!.textContent = "▶"
         }
     })
 }
     
 export class ScriptContent extends TextContent{
     outfield:HTMLDivElement
-    runbutton:HTMLElement
+    runnable:boolean = false
+    runbutton:HTMLElement | null =null
     constructor(note:Note){
         super(note)
         this.element.classList.add("js")
         this.element.spellcheck = false
-
-        this.runbutton = document.createElement("div")
-        this.runbutton.classList.add("runbutton")    
-        this.runbutton.textContent = "▶"
-        this.runbutton.contentEditable = "false"
-        this.runbutton.addEventListener("click",async (e)=>{
-            last_run_script = this
-            this.runbutton.textContent = "O"
-            await this.execute()
-            this.runbutton.textContent = "▶"
-
-        })
-        if (last_run_script == null) last_run_script = this
         
-        this.element.parentElement!.append(this.runbutton)
+        if (this.data.Path.location[this.data.Path.location.length-1] == this.data.Path.get_language()){
+            this.runnable = true
+            
+            this.runbutton = document.createElement("div")
+            this.runbutton.classList.add("runbutton")    
+            this.runbutton.textContent = "▶"
+            this.runbutton.contentEditable = "false"
+            this.runbutton.addEventListener("click",async (e)=>{
+                last_run_script = this
+                this.runbutton!.textContent = "O"
+                await this.execute()
+                this.runbutton!.textContent = "▶"
+            })
+            if (last_run_script == null) last_run_script = this
+            this.element.parentElement!.append(this.runbutton)
+        }
+
         this.outfield = document.createElement("div")
         this.outfield.classList.add("content")
         this.outfield.contentEditable = "false"
@@ -68,6 +71,10 @@ export class ScriptContent extends TextContent{
     
     }
 
+    on_input(e: Event): void {
+        if(this.runnable) last_run_script = this
+        super.on_input(e)
+    }
 
     async get_flat_text(rawtext:string, body:ScriptContent):Promise<[string,[string,Link][]]>{
 

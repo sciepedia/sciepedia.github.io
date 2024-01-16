@@ -13,7 +13,7 @@
     import {setup_autocomplete} from "./controller/autocomplete"
 
     if (browser){
-        document.title = window.location.hostname
+        document.title = window.location.hostname.split(".")[0] + (window.location.search? " | " + window.location.search.slice(1).split(":")[0] : "")
     }
 
     var homebutton:string
