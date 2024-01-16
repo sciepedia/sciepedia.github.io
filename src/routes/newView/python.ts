@@ -22,12 +22,10 @@ async function setup_python(){
 
 export async function run_python_code(code : string){
     console.log("run python");
-    
-
     if (pyo == undefined){
-        await setup_python()
-        return run_python_code(code)
+        await setup_python();
     }
+    await pyo!.loadPackage("micropip")
     let lines = code.split("\n")
 
     let imports = lines.filter(s=>/^\%pip\s*install/.test(s)).map(s=>{
@@ -36,12 +34,12 @@ export async function run_python_code(code : string){
     })
 
     for (let imp of imports){
-        await pyo.loadPackage(imp)
+        await pyo!.loadPackage(imp)
     }
 
     code = lines.filter(s=>!/^\%pip\s*install/.test(s)).join("\n")
     
-    let res = pyo.runPython(code)
+    let res = pyo!.runPythonAsync(code)
 
     return res
 }
