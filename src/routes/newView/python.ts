@@ -100,9 +100,7 @@ export class PythonContent extends ScriptContent{
             console.log(e);
             this.handle_error(e as Error)
         }
-        // .catch(e=>{
-        // }).then(res=>{
-        // })
+
     }
 
     handle_error(error:Error){

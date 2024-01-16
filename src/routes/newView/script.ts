@@ -6,35 +6,46 @@ import { Note } from "./note";
 import { Link } from "./link";
 import { is_link } from "../controller/util";
 import { TextContent } from "./textContent";
+import { browser } from "$app/environment";
 
+let last_run_script: ScriptContent | null = null
+
+if (browser){
+
+    window.addEventListener("keydown",(e)=>{
+        
+        if (e.ctrlKey && e.key == "Enter" && last_run_script != null){
+            last_run_script.runbutton.textContent = 'O'
+            console.log("start running");
+            
+            last_run_script.execute()
+            last_run_script.runbutton.textContent = "▶"
+        }
+    })
+}
+    
 export class ScriptContent extends TextContent{
     outfield:HTMLDivElement
+    runbutton:HTMLElement
     constructor(note:Note){
         super(note)
         this.element.classList.add("js")
         this.element.spellcheck = false
 
-        let runbutton = document.createElement("div")
-        runbutton.classList.add("runbutton")
-        runbutton.textContent = "▶"
-        runbutton.contentEditable = "false"
-        runbutton.addEventListener("click",async (e)=>{
-            runbutton.textContent = "O"
+        this.runbutton = document.createElement("div")
+        this.runbutton.classList.add("runbutton")    
+        this.runbutton.textContent = "▶"
+        this.runbutton.contentEditable = "false"
+        this.runbutton.addEventListener("click",async (e)=>{
+            last_run_script = this
+            this.runbutton.textContent = "O"
             await this.execute()
-            runbutton.textContent = "▶"
+            this.runbutton.textContent = "▶"
 
         })
-        this.element.addEventListener("keydown",(e)=>{
-            console.log(e);
-            if (e.ctrlKey && e.key == "Enter"){
-                runbutton.textContent = 'O'
-                console.log("start running");
-                
-                this.execute()
-                runbutton.textContent = "▶"
-            }
-        })
-        this.element.parentElement!.append(runbutton)
+        if (last_run_script == null) last_run_script = this
+        
+        this.element.parentElement!.append(this.runbutton)
         this.outfield = document.createElement("div")
         this.outfield.classList.add("content")
         this.outfield.contentEditable = "false"
@@ -159,7 +170,6 @@ export class ScriptContent extends TextContent{
 
 
 let scriptKeywords = ['abstract', 'arguments', 'await', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'double', 'else', 'enum', 'eval', 'export', 'extends', 'false', 'final', 'finally', 'float', 'for', 'function', 'goto', 'if', 'implements', 'import', 'in', 'instanceof', 'int', 'interface', 'let', 'long', 'native', 'new', 'null', 'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'super', 'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'true', 'try', 'typeof', 'var', 'void', 'volatile', 'while', 'with', 'yield']
-
 
 
 function parse(t:any):HTMLElement{
