@@ -26,18 +26,20 @@ export async function run_python_code(code : string){
         await setup_python();
     }
     await pyo!.loadPackage("micropip")
-    let lines = code.split("\n")
 
-    let imports = lines.filter(s=>/^\%pip\s*install/.test(s)).map(s=>{
+    let need_installs = false
+    code = code.split("\n").map((line,i)=>{
 
-        return s.split(/^\%pip\s*install/)[1].trim()
-    })
-
-    for (let imp of imports){
-        await pyo!.loadPackage(imp)
+        if (/^\%pip\s*install/.test(line)){
+            let importtarget = line.split(/^\%pip\s*install/)[1].trim()
+            need_installs = true
+            return `await micropip.install("${importtarget}")`
+        }
+        return line
+    }).join("\n")
+    if (need_installs){
+        code = "import micropip\n" + code
     }
-
-    code = lines.filter(s=>!/^\%pip\s*install/.test(s)).join("\n")
     
     let res = pyo!.runPythonAsync(code)
 
