@@ -324,6 +324,7 @@ div.editable>p>span.typo{
 
 .head>*{
 	cursor: pointer;
+	margin:.2em 0;
 	-ms-overflow-style: none;
     scrollbar-width: none;
 }

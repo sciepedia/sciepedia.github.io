@@ -25,9 +25,9 @@ export class Link{
 
     constructor(name:string, parent:Note, open = false){
         
-        const splits = name.split(".")
-        let item = splits[splits.length-1]            
-        if (/^[0-9]+$/.test(item)) this.linenumber = +item
+        for (let at of name.split(".").slice(-1)[0].split(":").slice(1)){
+            if (/^[0-9]+$/.test(at)) this.linenumber = +at
+        }
 
         this.name = name
         this.parent = parent

@@ -139,6 +139,7 @@ export class PythonContent extends ScriptContent{
         console.log("printing from", this);
         
         let p = document.createElement("p")
+        p.style.whiteSpace = "pre"
         for (let arg of args){
             p.append(parse(arg), " ")
         }
@@ -172,7 +173,7 @@ function parse(t:any):HTMLElement{
 
     }else{
         let tag = t.type ?? t.constructor.name
-        sp.textContent = tag + " "
+        // sp.textContent = tag + " "
 
         sp.style.color = "var(--blue)"
         sp.style.cursor = "pointer"
@@ -187,7 +188,6 @@ function parse(t:any):HTMLElement{
             p = document.createElement("p")
             p.style.paddingLeft = "2em"
 
-            sp.append(p)
             let maxcount = 20
 
             if (tag == "list"){
@@ -223,6 +223,7 @@ function parse(t:any):HTMLElement{
                     }catch{}
                 }
             }
+            if (p.innerHTML) sp.append(p)
         }
         sp.addEventListener('click',(e)=>{
             if (e.target != sp) return
@@ -230,9 +231,11 @@ function parse(t:any):HTMLElement{
             if (isopen){
                 p?.remove()
                 isopen = false
+                sp.style.color = "var(--blue)"
                 return
             }
             open()
+            sp.style.color = "var(--active)"
         })
 
         let prev = String(t)

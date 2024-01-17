@@ -60,7 +60,7 @@ export class PathData{
         
         if (JSON.stringify(parent.location) == JSON.stringify(this.location.slice(0,parent.location.length))){
             locstring = "." + this.location.slice(parent.location.length).join(".")
-        }else if(JSON.stringify(parent.location.slice(0,-1)) == JSON.stringify(this.location.slice(0,parent.location.length-1))){
+        }else if(this.location.length>1 && JSON.stringify(parent.location.slice(0,-1)) == JSON.stringify(this.location.slice(0,parent.location.length-1))){
             locstring = ".." + this.location.slice(parent.location.length-1).join(".")
         }
         
