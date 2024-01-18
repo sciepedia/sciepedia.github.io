@@ -24,6 +24,19 @@ export abstract class Content{
         })
         this.set_data (this.data)
 
+        this.element.addEventListener("keydown",(e)=>{
+
+            if (e.shiftKey && e.key == "Enter"){
+                let target = window.getSelection()?.anchorNode?.parentElement
+                if (is_link_element(target as Node)){
+                    let link = get_link(target as HTMLSpanElement)
+                    link?.set_open(!link.open)
+                    e.preventDefault()
+                }
+
+            }
+        })
+
         repoCounter ++ 
         this.element.id = `C${repoCounter}`
         contentRepo.set(this.element,this)
@@ -80,14 +93,11 @@ export abstract class Content{
         this.element.childNodes.forEach(p=>{
             if (p.nodeName =="P"){
                 p.childNodes.forEach(n=>{
-                    console.log(n);
-                    
+
                     if (is_link_element(n)){
                         let link = get_link(n as HTMLSpanElement)
                         if (link) {links.push(link)}
                     }else if (is_note_element(n)){
-                        console.log("note",n);
-                        
                         let content = get_content((n as HTMLElement).querySelector(".content")!)
                         if (content?.note.creator && !content.note.creator.element.parentElement){
                             links.push(content.note.creator)
@@ -114,10 +124,13 @@ export abstract class Content{
                 const link = get_link(span)
                 if (link == undefined){
                     txt += ""
-                // }else if (link?.expanded){
-                //     txt += node.textContent!
                 }else{
                     txt += span.textContent
+                }
+            }else if(is_note_element(node)){
+                let creator = get_content((node as HTMLDivElement).querySelector(".content") as HTMLDivElement)?.note.creator
+                if (creator && !creator.element.parentElement){
+                    txt += creator.name
                 }
             }else if ((node as HTMLElement).classList && (node as HTMLElement).classList.contains("image")){
 

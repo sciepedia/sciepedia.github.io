@@ -2,10 +2,10 @@ import { get } from "svelte/store";
 import { store } from "../model/data_store";
 import type { PathData, language } from "../model/data_store";
 import { username } from "../model/store";
-import { is_link_element, type Content } from "./content";
+import type { Content } from "./content";
 import {open_context_menu} from "./contextMenu"
 import { CsvContent } from "./csvContent";
-import { get_link, type Link } from "./link";
+import type { Link } from "./link";
 import { PythonContent } from "./python";
 import { rename_window } from "./renamer";
 import { ScriptContent } from "./script";
@@ -35,23 +35,6 @@ export class Note{
         this.element.append(this.head.element)
 
         this.language = path.get_language()
-
-
-        this.element.addEventListener("keydown",(e)=>{
-
-            if (e.shiftKey && e.key == "Enter"){
-
-                let target = window.getSelection()?.anchorNode?.parentElement
-                if (is_link_element(target as Node)){
-                    let link = get_link(target as HTMLSpanElement)
-                    link?.set_open(true)
-                    console.log("open", link);
-                    
-                    e.preventDefault()
-                }
-
-            }
-        })
 
         
         if (this.language == "txt"){
@@ -87,6 +70,7 @@ export class Note{
         if (this.creator && !this.creator?.element.parentElement){
             this.element.replaceWith(this.creator?.element)
         }
+
         this.element.remove()
     }
 

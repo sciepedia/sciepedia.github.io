@@ -83,7 +83,6 @@ export class Link{
 
             this.set_collapsed(false)
 
-            
             let line = this.element.parentElement as HTMLParagraphElement
             this.child = this.parent.create_child(this.path,this)
 
