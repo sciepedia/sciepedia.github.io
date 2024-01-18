@@ -136,6 +136,7 @@ export class TextContent extends Content{
     }
 
     on_input(e:Event){
+
         // this.set_focused(true)
         if (e.type == "input" && ( ["¨"].includes ((e as InputEvent).data!) )){
             return
@@ -246,8 +247,11 @@ export class TextContent extends Content{
         p.childNodes.forEach(c =>{
             if(is_link_element(c)){
                 const link = get_link(c as HTMLSpanElement)
-                link?.remove()
+                link?.remove()                
             }
+            // if (c instanceof HTMLElement && c.classList.contains("content")){
+            //     get_content(c as HTMLDivElement)?.note.remove()
+            // }
         })
         return newline
     }

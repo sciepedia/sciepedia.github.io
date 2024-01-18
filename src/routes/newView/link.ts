@@ -23,7 +23,7 @@ export class Link{
     path:PathData
     linenumber:number|null = null
 
-    constructor(name:string, parent:Note, open = false){
+    constructor(name:string, parent:Note, open = false){        
         
         for (let at of name.split(".").slice(-1)[0].split(":").slice(1)){
             if (/^[0-9]+$/.test(at)) this.linenumber = +at
@@ -38,8 +38,8 @@ export class Link{
         this.open = open
         this.element.addEventListener("click", ()=>{
             this.set_open(!this.open)
-            this.parent.content.save_linkstate()
         })
+
         linkCounter ++ 
         this.element.id = `L${linkCounter}`
         linkRepo.set(this.element,this)
@@ -49,10 +49,12 @@ export class Link{
 
     set_path(newpath:PathData){
 
-        console.log("renaming link to", newpath.tostring(),this.parent.path().tostring());
+        console.log("renaming link", newpath.tostring(),this.parent.path().tostring());
         
         this.path = newpath
         this.name = newpath.relative_path_string(this.parent.path())
+        console.log("new name:",this.name);
+        
         this.element.textContent = this.name
     }
 
@@ -72,13 +74,18 @@ export class Link{
     }
 
     set_open(value:boolean){
+
         if (value == this.open) return
+
         this.element.classList.toggle("open")
+        
         if (value){
+
             this.set_collapsed(false)
+
+            
             let line = this.element.parentElement as HTMLParagraphElement
             this.child = this.parent.create_child(this.path,this)
-            line.append(this.child!.element)
 
             if (this.linenumber!=null){
                 console.log(this.linenumber);
@@ -86,10 +93,20 @@ export class Link{
                 let item = this.child.content.element.childNodes.item(this.linenumber-1);
                 (item as HTMLParagraphElement).style.background = "var(--focus)"
             }
+            
+            if (line.textContent?.trim() == this.name){
+                this.element.remove()
+            }
+            line.append(this.child!.element)
+
         }else{
+            if (this.element.parentElement == null){
+                this.child!.element.replaceWith(this.element)
+            }
             this.child!.remove()
         }
         this.open=value
+        if (this.parent.content) this.parent.content.save_linkstate()
 
     }
 }

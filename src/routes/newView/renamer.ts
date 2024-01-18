@@ -1,7 +1,7 @@
 import { get_path_data, type PathData } from "../model/data_store"
-import { is_link } from "../controller/util";
 
-export var rename_note = (path:PathData) => new Promise<PathData>((resolve,reject)=>{
+
+export var rename_window = (path:PathData) => new Promise<PathData>((resolve,reject)=>{
     console.log("rename_note",path);
     
     const background = document.createElement("div")

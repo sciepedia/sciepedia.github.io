@@ -59,6 +59,8 @@ export abstract class Content{
         let linkstate:boolean[] = []
         this.get_links().forEach(link=>linkstate.push(link.open))
         store.set_linkstate(this.note.path(),linkstate)
+        console.log(linkstate);
+        
     }
 
     save_lazy(){
@@ -78,13 +80,24 @@ export abstract class Content{
         this.element.childNodes.forEach(p=>{
             if (p.nodeName =="P"){
                 p.childNodes.forEach(n=>{
+                    console.log(n);
+                    
                     if (is_link_element(n)){
                         let link = get_link(n as HTMLSpanElement)
-                        if (link) links.push(link)
+                        if (link) {links.push(link)}
+                    }else if (is_note_element(n)){
+                        console.log("note",n);
+                        
+                        let content = get_content((n as HTMLElement).querySelector(".content")!)
+                        if (content?.note.creator && !content.note.creator.element.parentElement){
+                            links.push(content.note.creator)
+                        }
                     }
                 })
             }
         })
+        console.log(links);
+        
         return links
     }
 
@@ -185,12 +198,13 @@ let repoCounter = 0
 export function is_link_element(element:Node){
     return (element instanceof HTMLElement) && element.classList.contains("link")
 }
+export function is_note_element(element:Node){
+    return (element instanceof HTMLElement) && element.classList.contains("note")
+}
 
 export function get_content(div: HTMLDivElement){
     return contentRepo.get(div)
 }
-
-
 
 
 export function put_caret(line:HTMLElement, offset:number):Node|null{

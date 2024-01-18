@@ -2,12 +2,12 @@ import { get } from "svelte/store";
 import { store } from "../model/data_store";
 import type { PathData, language } from "../model/data_store";
 import { username } from "../model/store";
-import type { Content } from "./content";
+import { is_link_element, type Content } from "./content";
 import {open_context_menu} from "./contextMenu"
 import { CsvContent } from "./csvContent";
-import type { Link } from "./link";
+import { get_link, type Link } from "./link";
 import { PythonContent } from "./python";
-import { rename_note } from "./renamer";
+import { rename_window } from "./renamer";
 import { ScriptContent } from "./script";
 import { TextContent } from "./textContent";
 
@@ -35,6 +35,23 @@ export class Note{
         this.element.append(this.head.element)
 
         this.language = path.get_language()
+
+
+        this.element.addEventListener("keydown",(e)=>{
+
+            if (e.shiftKey && e.key == "Enter"){
+
+                let target = window.getSelection()?.anchorNode?.parentElement
+                if (is_link_element(target as Node)){
+                    let link = get_link(target as HTMLSpanElement)
+                    link?.set_open(true)
+                    console.log("open", link);
+                    
+                    e.preventDefault()
+                }
+
+            }
+        })
 
         
         if (this.language == "txt"){
@@ -67,13 +84,15 @@ export class Note{
     remove(){
         this.content.save()
         this.content.save_linkstate()
+        if (this.creator && !this.creator?.element.parentElement){
+            this.element.replaceWith(this.creator?.element)
+        }
         this.element.remove()
     }
 
     create_child(path:PathData, link:Link){
         return new Note(path,link)
     }
-
 
     rename(newpath:PathData){
 
@@ -88,10 +107,10 @@ export class Note{
             link.set_path(link.path)
         })
         this.content.save()
-        
-        let newnote = new Note(this.path())
+
+        let newnote = new Note(this.path(),this.creator)
         this.element.replaceWith(newnote.element)
-        
+
         if(this.creator){
             this.creator.set_path(newpath)    
             this.creator.child = newnote
@@ -125,9 +144,16 @@ export class Head{
         this.note.element.append(this.element)
 
         this.element.addEventListener("click",(e)=>{
-            rename_note(this.note.content.data.Path)
-            .catch(()=>{})
-            .then(newpath=>{if (newpath) this.note.rename(newpath)})
+
+            console.log(note);
+            
+            if (! note.creator) console.log("no creator here");
+            
+            this.note.creator?.set_open(false)
+
+            // rename  _note(this.note.content.data.Path)
+            // .catch(()=>{})
+            // .then(newpath=>{if (newpath) this.note.rename(newpath)})
         })
         this.element.addEventListener("contextmenu",(e)=>{
             open_context_menu(e,this.note)

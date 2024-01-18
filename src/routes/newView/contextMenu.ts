@@ -1,4 +1,5 @@
 import type { Note } from "./note"
+import { rename_window } from "./renamer"
 
 export function open_context_menu(e:MouseEvent, note:Note){
     e.preventDefault()
@@ -16,14 +17,21 @@ export function open_context_menu(e:MouseEvent, note:Note){
         const items =[
             {
                 tag : "share link",
-                fn : async(p:HTMLParagraphElement )=>{
+                fn : async(button:HTMLParagraphElement )=>{
                     await navigator.clipboard.writeText(location.origin + "?" + note.path().tostring().replace("#",""))
-                    p.textContent = "copied."}
+                    button.textContent = "copied."}
             },
             {
                 tag : `expand note ${note.path().tostring()}`,
-                fn : async (p:HTMLParagraphElement)=>{
+                fn : async (button:HTMLParagraphElement)=>{
                     window.location.search = note.path().tostring().replace("#","")
+                }
+            },{
+                tag : `rename note`,
+                fn : async (button:HTMLParagraphElement)=>{
+                    rename_window(note.content.data.Path)
+                    .catch(()=>{})
+                    .then(newpath=>{if (newpath) note.rename(newpath)})
                 }
             }
         ]
