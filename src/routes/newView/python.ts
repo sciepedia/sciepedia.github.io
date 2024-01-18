@@ -2,6 +2,8 @@
 import { ScriptContent } from "./script";
 import type {PyodideInterface} from "pyodide"
 import { last_focused_content } from "./textContent";
+import { is_http_link, is_youtube_link, make_http_link, make_youtube_player } from "../controller/util";
+import { Image } from "./image";
 
 
 let pyo : PyodideInterface | undefined 
@@ -16,9 +18,7 @@ async function setup_python(){
     
     // @ts-ignore
     await import ("https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js")
-    // window.print = (...x:any)=>{}
     // @ts-ignore
-    // pyo = await loadPyodide({stdout:print}) as PyodideInterface
     pyo = await loadPyodide() as PyodideInterface
     active_content!.outfield.innerHTML = "";
     (window as any).pyo = pyo
@@ -59,9 +59,7 @@ export function python_element(word:string){
         }
     })
     return res
-
 }
-
 
 export class PythonContent extends ScriptContent{
 
@@ -78,9 +76,7 @@ export class PythonContent extends ScriptContent{
             console.log(e);
             this.handle_error(e as Error)
         }
-
     }
-
 
     async run_python_code(code : string, ){
         console.log("run python");
@@ -114,6 +110,52 @@ export class PythonContent extends ScriptContent{
     }
 
 
+
+    make_line(txt:string,compact:boolean=true): HTMLElement{
+
+        if (txt == ""){
+            let p = document.createElement("p")
+            p.innerHTML = "<br>"
+            return p
+        }
+    
+        txt = txt.replaceAll(" ", "\xa0")
+        txt = txt.replace(/(\S)\u00A0(\S)/g, "$1 $2");
+
+        let words = txt.split(/([\s+[\]{}(),])/);
+        let p = document.createElement("p")
+        let nodes:Node[] = []
+
+        for (let c in words){
+            // let i  = +c
+            let w = words[c]
+            // if (is_link(w) && (!w.startsWith(".") || /\s+| | /.test(words[+c-1]) || words[+c-1] == undefined ) ){
+            //     try{
+            //         const link = new Link(w,this.note)
+            //         nodes.push(link.element)
+            //     }catch(e){
+            //         console.log("failed link", w,e);
+            //         nodes.push(this.make_word(w))
+            //     }
+            
+            // }else 
+            if(is_http_link(w)){
+                if (is_youtube_link(w))nodes.push(make_youtube_player(w))
+                else nodes.push(make_http_link(w))
+            }else if(w.startsWith("##image:")){
+                const img = new Image(txt.slice(8))
+                nodes.push(img.element)
+                break
+            }else{
+                nodes.push(this.make_word(w))
+            }
+        }
+        nodes.forEach(n=>{
+            p.appendChild(n)
+        })
+        
+        return p
+    }
 
     handle_error(error:Error){
         let lines = error.stack!.split("\n")
