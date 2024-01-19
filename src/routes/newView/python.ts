@@ -73,7 +73,7 @@ export class PythonContent extends ScriptContent{
             let res = await this.run_python_code(code)
             if (res != undefined) print(res)
         }catch(e){
-            console.log(e);
+            console.error(e);
             this.handle_error(e as Error)
         }
     }
@@ -104,7 +104,8 @@ export class PythonContent extends ScriptContent{
         console.log(code);
         let globals = pyo?.globals
 
-        globals!.set("print", (...x:any[])=> this.print(...x.map(item=> item.toJs? item.toJs() : item)) )
+        //dont remove await
+        globals!.set("print", async (...x:any[])=> await this.print(...x) )
         let res = pyo!.runPythonAsync(code)
         return res
     }
@@ -127,18 +128,8 @@ export class PythonContent extends ScriptContent{
         let nodes:Node[] = []
 
         for (let c in words){
-            // let i  = +c
             let w = words[c]
-            // if (is_link(w) && (!w.startsWith(".") || /\s+| | /.test(words[+c-1]) || words[+c-1] == undefined ) ){
-            //     try{
-            //         const link = new Link(w,this.note)
-            //         nodes.push(link.element)
-            //     }catch(e){
-            //         console.log("failed link", w,e);
-            //         nodes.push(this.make_word(w))
-            //     }
             
-            // }else 
             if(is_http_link(w)){
                 if (is_youtube_link(w))nodes.push(make_youtube_player(w))
                 else nodes.push(make_http_link(w))
@@ -178,12 +169,14 @@ export class PythonContent extends ScriptContent{
     }
 
     print(...args:any[]){
-        console.log("printing from", this);
-        
+
+        console.log("printing",args);
+                
         let p = document.createElement("p")
         p.style.whiteSpace = "pre"
         for (let arg of args){
-            p.append(parse(arg), " ")
+        //     p.append(parse(arg), " ")
+            p.append(String(arg))
         }
         this.outfield.append(p)
     }
@@ -191,6 +184,9 @@ export class PythonContent extends ScriptContent{
 
 
 function parse(t:any):HTMLElement{
+    
+
+    console.log("parsing ",t);
     
     let is_simple = (t:any)=> ["string", "number", "boolean", "symbol", "undefined", "function"].includes(typeof t) || t == null
 
@@ -281,6 +277,7 @@ function parse(t:any):HTMLElement{
         })
 
         let prev = String(t)
+        if (t instanceof Array)prev = `[${prev}]`
         // if (prev.length > 20) prev = prev.slice(0,19) + "..."
         sp.append(prev)
         
