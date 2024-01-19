@@ -40,8 +40,12 @@ export class TextContent extends Content{
         this.element.addEventListener("paste", this.on_paste)
 
         this.element.contentEditable = String(this.data.Path.author == get(username))
+
         if (this.element.contentEditable == "false"){
-            this.element.addEventListener("click",()=>{
+            this.element.addEventListener("click",(e)=>{
+                let target = e.target as HTMLElement
+                if (is_link_element(target) || ["H2"] .includes(target.nodeName) || target.classList.contains("runbutton") )return
+                
                 let path = new PathData(this.data.Path.pub, get(username), this.data.Path.location)
                 let newpath = window.prompt(`to edit ${this.data.Path.author}'s note you need to make a copy`, path.tostring())
                 if (newpath == null) return
