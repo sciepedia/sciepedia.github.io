@@ -5,7 +5,7 @@ import { Link, get_link } from "./link";
 import type { Note } from "./note";
 import { username } from "../model/store";
 import {Image, image_from_file} from "./image"
-import { Content, get_content, is_link_element, put_caret } from "./content";
+import { Content, get_content, get_parent_content, is_link_element, put_caret } from "./content";
 
 
 export let last_focused_content:Content | null = null
@@ -22,14 +22,7 @@ export class TextContent extends Content{
             }
         })
 
-        function get_parent_content(target:HTMLElement){
-            while (true){
-                if (target.classList && target.classList.contains("content"))break
-                target = target.parentNode as HTMLElement
-            }
-            return target
-        }
-
+        
         this.element.addEventListener("input",(e)=>{
             
             let target = get_parent_content(window.getSelection()?.focusNode as HTMLElement)
@@ -39,7 +32,7 @@ export class TextContent extends Content{
 
         this.element.addEventListener("paste", this.on_paste)
 
-        this.element.contentEditable = String(this.data.Path.author == get(username))
+        // this.element.contentEditable = String(this.data.Path.author == get(username))
 
         if (this.element.contentEditable == "false"){
 

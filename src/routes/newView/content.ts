@@ -5,7 +5,41 @@ import { store, type NoteData } from "../model/data_store";
 import { Link, get_link } from "./link";
 import { is_http_link, is_link, is_youtube_link, make_http_link, make_youtube_player } from "../controller/util";
 import {Image} from "./image"
+import { username } from "../model/store";
+import { get } from "svelte/store";
+import { browser } from "$app/environment";
+// import { get_parent_content } from "./textContent";
 
+
+export function get_parent_content(target:HTMLElement|null){
+    while (target){
+        if (target.classList && target.classList.contains("content"))break
+        target = target.parentNode as HTMLElement | null
+    }
+    return target
+}
+
+
+
+export let editableContent: Content | null = null
+
+export function make_editable(content:Content){
+    if (content.can_edit){
+        if (editableContent) editableContent.set_editable(false)
+        if (content)content.set_editable(true)
+        editableContent = content
+    }   
+}
+if (browser){
+
+    window.addEventListener("click", (e)=>{
+        let content = get_parent_content(e.target as HTMLElement)
+        if (content){
+            let cont = get_content(content as HTMLDivElement)            
+            make_editable(cont!)
+        }
+    })
+}
 
 export abstract class Content{
 
@@ -13,6 +47,7 @@ export abstract class Content{
     element:HTMLDivElement
     data:NoteData
     saves_pending:boolean
+    can_edit: boolean
     constructor(note:Note){
         this.note = note
         this.element = document.createElement("div")
@@ -33,7 +68,6 @@ export abstract class Content{
                     link?.set_open(!link.open)
                     e.preventDefault()
                 }
-
             }
         })
 
@@ -41,6 +75,14 @@ export abstract class Content{
         this.element.id = `C${repoCounter}`
         contentRepo.set(this.element,this)
         this.saves_pending = false
+        this.can_edit = this.data.Path.author == get(username)
+    }
+
+    set_editable(value:boolean){
+        if (this.can_edit){
+            this.element.contentEditable = String(value)
+            this.element.focus()
+        }
     }
 
     set_data(data:NoteData){
@@ -216,6 +258,8 @@ export function is_note_element(element:Node){
 }
 
 export function get_content(div: HTMLDivElement){
+    console.log(contentRepo);
+    
     return contentRepo.get(div)
 }
 
