@@ -42,15 +42,19 @@ export class TextContent extends Content{
         this.element.contentEditable = String(this.data.Path.author == get(username))
 
         if (this.element.contentEditable == "false"){
-            this.element.addEventListener("click",(e)=>{
+
+            this.element.addEventListener("mousedown",(e)=>{
+
+                let cont = get_parent_content(e.target as HTMLElement)
+                if (cont != this.element)return
                 let target = e.target as HTMLElement
-                if (is_link_element(target) || ["H2"] .includes(target.nodeName) || target.classList.contains("runbutton") )return
                 
+                if (is_link_element(target) || ["H2"] .includes(target.nodeName) || target.classList.contains("runbutton") )return
+
                 let path = new PathData(this.data.Path.pub, get(username), this.data.Path.location)
                 let newpath = window.prompt(`to edit ${this.data.Path.author}'s note you need to make a copy`, path.tostring())
+
                 if (newpath == null) return
-                console.log(newpath);
-                // throw "not implemented"
                 this.note.rename(get_path_data(newpath))
             })
         }
@@ -145,6 +149,8 @@ export class TextContent extends Content{
         if (e.type == "input" && ( ["¨"].includes ((e as InputEvent).data!) )){
             return
         }
+
+        
         
         const sel = window.getSelection()
         const target = sel?.focusNode! as Node
@@ -152,10 +158,16 @@ export class TextContent extends Content{
 
         var p: HTMLParagraphElement 
 
+        
+
         if (target.nodeName == "P"){
             p = target as HTMLParagraphElement
         }else if (target.nodeName == "DIV"){
             p = target.firstChild as HTMLParagraphElement
+            if (p==null){
+                p = document.createElement('p')
+                target.appendChild(p)
+            }
         }else if (target.parentElement?.nodeName == "P"){
             p = target.parentElement as HTMLParagraphElement
         }else if (target.parentElement?.parentElement?.nodeName == "P"){
@@ -179,6 +191,9 @@ export class TextContent extends Content{
 
             return
         }
+
+        console.log(p);
+        
 
         if ((e as InputEvent).inputType == "insertParagraph"){
 
