@@ -93,7 +93,7 @@ export class Link{
                 (item as HTMLParagraphElement).style.background = "var(--focus)"
             }
             
-            if (line.textContent?.trim() == this.name){
+            if (line.textContent?.trim() == this.name && this.path.get_language() != "csv"){
                 this.element.remove()
             }
             line.append(this.child!.element)
