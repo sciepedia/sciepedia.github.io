@@ -6,7 +6,7 @@
 
     import {tick} from "svelte"
     
-    import {Note } from "./newView/note"
+    import {Note } from "./view/note"
     import { is_link } from "./controller/util"
     import { store } from "./model/data_store"
 
@@ -48,7 +48,7 @@ If you want to learn more, check out: #sciepedia:kormann
 
     import { is_online, lightmode, pwdhash, username } from "./model/store";
     import { PathData, get_path_data } from "./model/data_store";
-    import Searchbar from "./newView/searchbar.svelte";
+    import Searchbar from "./view/searchbar.svelte";
 
     let home_path = get_path_data("_home:"+$username)
 
