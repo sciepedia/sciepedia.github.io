@@ -1,7 +1,11 @@
+const prod_backend_url = "https://chatserver.sciepedia.com/"
+const dev_backend_url = "http://localhost:5000/"
 
-// const backend_url = "https://chatserver.sciepedia.com/"
-const backend_url = "http://localhost:5000/"
+let backend_url = prod_backend_url
+if (window.location.hostname === "localhost") backend_url = dev_backend_url
 
+
+import { blank_object } from "svelte/internal"
 import type {Message} from "./chat"
 
 export function get_answer(hist:Message[], callback: (chunk:string)=>any){
