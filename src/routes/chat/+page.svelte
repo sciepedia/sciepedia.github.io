@@ -15,6 +15,7 @@
   import {mount} from "./chat"
   onMount(mount)
   import { get_embeddings } from "./api_connection";
-  get_embeddings(["hello"]).then(emb=>console.log(emb))
+  // get_embeddings(["hello"]).then(emb=>console.log(emb))
+  document.title = "chat"
   
 </script>
