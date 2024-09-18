@@ -25,7 +25,6 @@ export const username       = createWritable<string>("username", "me")
 export const email          = createWritable<string>("email", "")
 export const userId         = createWritable<uuid>("userId", "-----")
 export const pwdhash        = createWritable<string>("pwdhash", "None")
-export const lightmode      = createWritable<Boolean> ("lightmode", false)
 export const searchhist     = createWritable<{[key:string]:number}> ("searchhist", {})
 
 export const openaikey      = createWritable<string|null>("openaikey", null)

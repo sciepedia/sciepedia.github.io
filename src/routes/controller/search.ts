@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { title_set, updated_title_list } from "./autocomplete"
 import { PathData } from "../model/data_store"
-import { lightmode, searchhist } from "../model/store"
+import { searchhist } from "../model/store"
 import { openaisetup } from "../model/ai"
 import { store } from "../model/data_store"
 // import { Note } from "../view/note"
@@ -18,9 +18,6 @@ export type itemRep = string | ((x:string)=>string)
 export type searchItem = {tags: searchTag, rep:itemRep, executor: Function, }
 
 let tools: searchItem[]= [
-    {tags:["lightmode", "darkmode"], rep: "⚙️ switch lightmode", executor:()=>{
-        lightmode.set(!get(lightmode))
-    }},
     {tags:["account", "login", "signup", "sign in", "log out", "sign out", "user account"],rep:"⚙️ account settings", executor:()=>{
         window.location.pathname = "login"
     }},

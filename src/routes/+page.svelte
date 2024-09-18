@@ -46,7 +46,7 @@ If you want to learn more, check out: #sciepedia:kormann
 
     let page:HTMLDivElement
 
-    import { is_online, lightmode, pwdhash, username } from "./model/store";
+    import { is_online, pwdhash, username } from "./model/store";
     import { PathData, get_path_data } from "./model/data_store";
     import Searchbar from "./view/searchbar.svelte";
 
@@ -58,12 +58,6 @@ If you want to learn more, check out: #sciepedia:kormann
         setup_autocomplete()
 
         window.fetch = data.fetch
-
-
-        lightmode.subscribe(val=>{
-            if (val){document.body.classList.add("light")}
-            else{document.body.classList.remove("light")}
-        })
 
         pred = document.createElement("div")
         pred.innerHTML = "<p>this is a pred</p><p>this is a pred</p><p>this is a pred</p>"
