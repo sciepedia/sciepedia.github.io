@@ -32,6 +32,8 @@
 
     async function _login(){
         $pwdhash = hash(password)
+        console.log($pwdhash);
+        
         let {user,error} = await login($email,$pwdhash)
         if (error) {
             neterror = error.message

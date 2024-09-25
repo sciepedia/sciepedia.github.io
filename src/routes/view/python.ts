@@ -39,9 +39,11 @@ let pythonKeywords = [
 // Construct a regex pattern from the keywords
 let keywordRegex = new RegExp("\\b" + pythonKeywords.join("\\b|\\b") + "\\b");
 
+let bluecolor = '#3388FF'
+
 const syntaxclasses = [
-    {pattern:(x:string)=>/[\[\]{}()]/.test(x),color:"yellow"},
-    {pattern:(x:string)=>pythonKeywords.includes(x),color:"lightblue"},
+    {pattern:(x:string)=>/[\[\]{}()]/.test(x),color:bluecolor},
+    {pattern:(x:string)=>pythonKeywords.includes(x),color:bluecolor},
     {pattern:(x:string)=>!isNaN(parseFloat(x)),color:"orange"}, // number
     {pattern:(x:string)=>/^"(.*)"/.test(x),color:"orange"}, // string
 ]
