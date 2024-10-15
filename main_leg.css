@@ -38,12 +38,12 @@ body {
 }
 
 #page{
-    top:0;
+	top:0;
 	color:var(--color);
 
 	margin-top:5em;
 	padding-bottom:calc( 100vh - 100px );
-	margin-left:max(0px,calc(50vw - 50vh));
+	margin-left:max(5em,calc(50vw - 50vh));
 
 	overflow-y: auto;
 	overflow-x: visible;
@@ -329,7 +329,6 @@ div.editable>p>span.typo{
 
 .head:hover>.navbutton:hover{
 	color:var(--pink);
-	/* font-weight: bold; */
 }
 
 p{
@@ -357,7 +356,6 @@ p{
 	left:0;
 
 	width:70vw;
-
 	font-weight: normal;
 	color:var(--color);
 
@@ -365,7 +363,7 @@ p{
 	padding: .5em;
 	padding-left: 1em;
 	z-index: 100;
-	margin-left:max(0px,calc(50vw - 50vh));
+	margin-left:max(5em, calc(50vw - 50vh));
 	margin-right:max(0px,calc(50vw - 50vh));
 
 	font-size: 1em;
@@ -374,25 +372,24 @@ p{
 	display: inline-block;
 
 	box-shadow:0 2px 0px var(--focus);
-
-
 }
 
 #search_btn{
 	border:unset;
 	font-weight: bold;
 	position:fixed;
-	color:var(--dark);
-	background-color: var(--grey);
-	z-index: 200;
-	font-size: 1.5em;
-	
-	/* width:1.4em; */
+	z-index: 1000;
+
+	color:var(--grey);
+	background-color: var(--dark);
+	font-size: 2em;
+	cursor: pointer;
+
 	height:1.4em;
-	padding: .1em .4em;
-	border-radius: .7em;
-	top: .6em;
-	left:.6em;
+	padding: .0em .4em;
+	border-radius: .5em;
+	top: -.1em;
+	left:.4em;
 }
 
 span#search_btn{
@@ -493,7 +490,6 @@ input[type=range]::-webkit-slider-thumb {
 		margin-right:.5em;
 	}
 
-
 	.title {
 		margin:auto;
 		padding-left:0;
@@ -505,22 +501,18 @@ input[type=range]::-webkit-slider-thumb {
 	}
 
 	#homebtn{
-
 		display: inline-block;
 		margin:auto;
 		padding-left:4em;
 		margin-top:1em;
 		margin-bottom: 0em;
-
 	}
 
 	#fullheader{
 		padding-left: 4em;
 	}
 
-	
 	body{
-
 		font-size: 2vh;
 		margin:0;
 		padding: 0;
@@ -541,13 +533,10 @@ input[type=range]::-webkit-slider-thumb {
 		width:90vw;
 		margin: auto;
 		margin-top:10vh;
-
 	}
 
 	.note{
-
 		border-bottom:1px solid var(--grey);
-		/* border-top:1px solid var(--grey); */
 		margin-top:1em;
 		padding-top:0em;
 		margin-bottom:1em;
@@ -566,8 +555,6 @@ input[type=range]::-webkit-slider-thumb {
 
 	};
 
-
-
 	div,.head{
 		margin-left:0;
 		margin-right:0;
@@ -576,6 +563,7 @@ input[type=range]::-webkit-slider-thumb {
 		padding-bottom: 0;
 		width:100%;
 	};
+
 	.content,p{
 		color:red;
 	}
@@ -585,5 +573,4 @@ input[type=range]::-webkit-slider-thumb {
 		padding: 0;
 		margin:0;
 	}
-
 }
