@@ -26,12 +26,12 @@ body {
 }
 @media (prefers-color-scheme: light) {
 	body {
-		--dark: #ebebe7;
+		--dark: #fdfcf4;
 		--grey: rgb(130, 140, 170);
 		--blue: rgb(83, 91, 255);
 		--active: rgb(105, 12, 198);
 		--color: #272523;
-		--focus: #fdfcf4;
+		--focus: #dbf7b6;
 		--green: rgb(104, 183, 158);
 		--brown: #75726b;
 	}
