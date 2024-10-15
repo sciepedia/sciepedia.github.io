@@ -27,5 +27,3 @@ one interesting feature is the simple javascript scripting capability. You can w
 Sciepedia is a svelte project. Pull requests welcome
 
 installation: clone, npm install, npm run dev
-
-
